@@ -1,9 +1,9 @@
 import { Outlet } from 'react-router-dom'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
-import { ScrollProgress } from '@/components/layout/ScrollProgress'
-import { AnimatedBackground } from '@/components/layout/AnimatedBackground'
-import { SkipNav } from '@/components/ui/SkipNav'
+import { Navbar } from '@/portfolio/components/layout/Navbar'
+import { Footer } from '@/portfolio/components/layout/Footer'
+import { ScrollProgress } from '@/portfolio/components/layout/ScrollProgress'
+import { AnimatedBackground } from '@/portfolio/components/layout/AnimatedBackground'
+import { SkipNav } from '@/portfolio/components/ui/SkipNav'
 
 export function RootLayout() {
   return (

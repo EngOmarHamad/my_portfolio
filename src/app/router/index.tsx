@@ -3,16 +3,16 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { RootLayout } from '@/app/layouts/RootLayout'
 
-const HomePage = lazy(() => import('@/pages/Home').then((m) => ({ default: m.HomePage })))
-const ProjectsPage = lazy(() => import('@/pages/Projects').then((m) => ({ default: m.ProjectsPage })))
-const ProjectDetailPage = lazy(() => import('@/pages/Projects/ProjectDetail').then((m) => ({ default: m.ProjectDetailPage })))
-const AboutPage = lazy(() => import('@/pages/About').then((m) => ({ default: m.AboutPage })))
-const BlogPage = lazy(() => import('@/pages/Blog').then((m) => ({ default: m.BlogPage })))
-const SkillsPage = lazy(() => import('@/pages/Skills').then((m) => ({ default: m.SkillsPage })))
-const ExperiencePage = lazy(() => import('@/pages/Experience').then((m) => ({ default: m.ExperiencePage })))
-const ContactPage = lazy(() => import('@/pages/Contact').then((m) => ({ default: m.ContactPage })))
-const CVPage = lazy(() => import('@/pages/CV').then((m) => ({ default: m.CVPage })))
-const NotFoundPage = lazy(() => import('@/pages/NotFound').then((m) => ({ default: m.NotFoundPage })))
+const HomePage = lazy(() => import('@/portfolio/pages/Home').then((m) => ({ default: m.HomePage })))
+const ProjectsPage = lazy(() => import('@/portfolio/pages/Projects').then((m) => ({ default: m.ProjectsPage })))
+const ProjectDetailPage = lazy(() => import('@/portfolio/pages/Projects').then((m) => ({ default: m.ProjectDetailPage })))
+const AboutPage = lazy(() => import('@/portfolio/pages/About').then((m) => ({ default: m.AboutPage })))
+const BlogPage = lazy(() => import('@/portfolio/pages/Blog').then((m) => ({ default: m.BlogPage })))
+const SkillsPage = lazy(() => import('@/portfolio/pages/Skills').then((m) => ({ default: m.SkillsPage })))
+const ExperiencePage = lazy(() => import('@/portfolio/pages/Experience').then((m) => ({ default: m.ExperiencePage })))
+const ContactPage = lazy(() => import('@/portfolio/pages/Contact').then((m) => ({ default: m.ContactPage })))
+const CVPage = lazy(() => import('@/portfolio/pages/CV').then((m) => ({ default: m.CVPage })))
+const NotFoundPage = lazy(() => import('@/portfolio/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
 
 function PageLoader() {
   return (
