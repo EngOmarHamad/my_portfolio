@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Loader2, Mail, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '@/admin/lib/supabase'
@@ -10,16 +10,9 @@ export function ResetPasswordPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [sent, setSent] = useState(false)
-  const [isRecovery, setIsRecovery] = useState(false)
+  const [isRecovery] = useState(() => window.location.hash.includes('type=recovery'))
   const [done, setDone] = useState(false)
   const navigate = useNavigate()
-
-  useEffect(() => {
-    const hash = window.location.hash
-    if (hash.includes('type=recovery')) {
-      setIsRecovery(true)
-    }
-  }, [])
 
   const handleSendEmail = async (e: React.FormEvent) => {
     e.preventDefault()
