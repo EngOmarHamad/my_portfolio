@@ -21,6 +21,7 @@ const sidebarItems = [
   { label: 'Social Links', path: '/admin/social-links', icon: 'Share2' },
   { label: 'SEO', path: '/admin/seo', icon: 'Search' },
   { label: 'Settings', path: '/admin/settings', icon: 'Settings' },
+  { label: 'Data Viewer', path: '/admin/data', icon: 'Database' },
 ]
 
 export function useSidebar() {

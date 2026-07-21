@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, PanelsTopLeft, User, Code2, FolderKanban, Briefcase,
   History, GraduationCap, Award, Star, Trophy, Cpu, Timeline, FileText,
-  Image, FileDown, Mail, Share2, Search, Settings, ChevronLeft,
+  Image, FileDown, Mail, Share2, Search, Settings, Database, ChevronLeft,
   PanelRightClose, PanelRightOpen,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
@@ -12,7 +12,7 @@ import { useMediaQuery } from '@/admin/hooks/use-media-query'
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard, PanelsTopLeft, User, Code2, FolderKanban, Briefcase,
   History, GraduationCap, Award, Star, Trophy, Cpu, Timeline, FileText,
-  Image, FileDown, Mail, Share2, Search, Settings,
+  Image, FileDown, Mail, Share2, Search, Settings, Database,
 }
 
 export function Sidebar() {

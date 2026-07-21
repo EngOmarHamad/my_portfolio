@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Loader2, LogIn } from 'lucide-react'
 import { authService } from '@/admin/services/auth-service'
 import { useAuthStore } from '@/admin/stores/auth-store'
@@ -55,7 +55,12 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[var(--color-text)]">Password</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-[var(--color-text)]">Password</label>
+              <Link to="/admin/reset-password" className="text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors">
+                Forgot password?
+              </Link>
+            </div>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}

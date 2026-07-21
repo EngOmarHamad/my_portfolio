@@ -3,6 +3,8 @@ import { Routes, Route } from 'react-router-dom'
 import { AdminLayout } from '@/admin/layouts/AdminLayout'
 
 const LoginPage = lazy(() => import('@/admin/pages/Auth/LoginPage').then((m) => ({ default: m.LoginPage })))
+const ResetPasswordPage = lazy(() => import('@/admin/pages/Auth/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
+const DataViewerPage = lazy(() => import('@/admin/pages/DataViewer').then((m) => ({ default: m.DataViewerPage })))
 const DashboardPage = lazy(() => import('@/admin/pages/Dashboard').then((m) => ({ default: m.DashboardPage })))
 const HeroPage = lazy(() => import('@/admin/pages/Hero').then((m) => ({ default: m.HeroPage })))
 const AboutPage = lazy(() => import('@/admin/pages/About').then((m) => ({ default: m.AboutPage })))
@@ -40,6 +42,7 @@ export function AdminRouter() {
     <Suspense fallback={<AdminLoader />}>
       <Routes>
         <Route path="login" element={<LoginPage />} />
+          <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route element={<AdminLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="hero" element={<HeroPage />} />
@@ -61,6 +64,7 @@ export function AdminRouter() {
           <Route path="resume" element={<ResumePage />} />
           <Route path="seo" element={<SEOPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="data" element={<DataViewerPage />} />
         </Route>
       </Routes>
     </Suspense>
