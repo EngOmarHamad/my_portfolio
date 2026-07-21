@@ -1,10 +1,10 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from '@/admin/components/Sidebar'
 import { Header } from '@/admin/components/Header'
-import { useRequireAuth } from '@/admin/hooks/use-auth'
-import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
+import { useAuth, useRequireAuth } from '@/admin/hooks/use-auth'
 
 export function AdminLayout() {
+  useAuth()
   const { isAuthenticated, isLoading } = useRequireAuth()
 
   if (isLoading) {
