@@ -1,0 +1,104 @@
+import { useState, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, FolderOpen } from 'lucide-react'
+import { PageTransition } from '@/components/layout/PageTransition'
+import { Section, SectionHeader } from '@/components/ui/Section'
+import { ProjectCard } from '@/components/cards/ProjectCard'
+import { Reveal } from '@/components/animations/Reveal'
+import { useProjects, useProjectCategories } from '@/hooks/use-portfolio-data'
+import { cn } from '@/utils/cn'
+
+export function ProjectsPage() {
+  const [activeCategory, setActiveCategory] = useState('All')
+  const [searchQuery, setSearchQuery] = useState('')
+  const { data: projects = [] } = useProjects()
+  const { data: categories = ['All'] } = useProjectCategories()
+
+  const filtered = useMemo(() => {
+    return projects.filter((project) => {
+      const matchesCategory = activeCategory === 'All' || project.category === activeCategory
+      const matchesSearch =
+        !searchQuery ||
+        project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (project.tech_stack ?? []).some((t: string) =>
+          t.toLowerCase().includes(searchQuery.toLowerCase()),
+        )
+      return matchesCategory && matchesSearch
+    })
+  }, [activeCategory, searchQuery, projects])
+
+  return (
+    <PageTransition>
+      <main>
+        <Section variant="teal">
+          <SectionHeader
+            title="Projects"
+            subtitle="Engineering solutions that make a difference."
+            accent="primary"
+          />
+
+          <Reveal>
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-md border border-border/50 bg-bg pl-10 pr-4 py-2.5 text-sm text-text placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-8">
+              {categories.map((category, i) => {
+                const activeColors = ['bg-primary text-white', 'bg-accent text-white', 'bg-highlight text-white', 'bg-primary text-white']
+                const inactiveColors = ['bg-surface text-text-secondary hover:bg-primary/5 hover:text-primary border-primary/20', 'bg-surface text-text-secondary hover:bg-accent/5 hover:text-accent border-accent/20', 'bg-surface text-text-secondary hover:bg-highlight/5 hover:text-highlight border-highlight/20', 'bg-surface text-text-secondary hover:bg-primary/5 hover:text-primary border-primary/20']
+                return (
+                  <button
+                    key={category}
+                    onClick={() => setActiveCategory(category)}
+                    className={cn(
+                      'rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 border',
+                      activeCategory === category
+                        ? activeColors[i % activeColors.length]
+                        : inactiveColors[i % inactiveColors.length],
+                    )}
+                  >
+                    {category}
+                  </button>
+                )
+              })}
+            </div>
+          </Reveal>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeCategory + searchQuery}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"
+            >
+              {filtered.map((project, i) => (
+                <ProjectCard key={project.id} project={project} index={i} />
+              ))}
+            </motion.div>
+          </AnimatePresence>
+
+          {filtered.length === 0 && (
+            <div className="text-center py-24">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-surface border border-border/40 mb-5">
+                <FolderOpen className="h-6 w-6 text-text-tertiary" />
+              </div>
+              <p className="text-base text-text-secondary">No projects found matching your criteria.</p>
+              <p className="text-sm text-text-tertiary mt-1.5">Try adjusting your search or filter.</p>
+            </div>
+          )}
+        </Section>
+      </main>
+    </PageTransition>
+  )
+}

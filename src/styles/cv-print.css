@@ -1,0 +1,295 @@
+/* CV Print Styles - ATS Compatible */
+
+.cv-page {
+  --cv-text: #1C1917;
+  --cv-text-secondary: #6B6560;
+  --cv-muted: #A09890;
+  --cv-border: #DDD8D0;
+  --cv-accent: #256F6C;
+  --cv-accent-alt: #F1633D;
+  --cv-bg: #FFFFFF;
+  --cv-surface: #FCFAF7;
+}
+
+.cv-print-controls {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--cv-bg);
+  border-bottom: 1px solid var(--cv-border);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.cv-sheet {
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 18mm 14mm;
+  background: var(--cv-bg);
+  font-family: 'DM Sans', 'Helvetica', 'Arial', sans-serif;
+  font-size: 11pt;
+  line-height: 1.5;
+  color: var(--cv-text);
+}
+
+.cv-header {
+  text-align: center;
+  margin-bottom: 4mm;
+  padding-bottom: 3mm;
+  border-bottom: 2px solid var(--cv-accent);
+}
+
+.cv-name {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 22pt;
+  font-weight: 400;
+  color: var(--cv-text);
+  margin: 0 0 2mm 0;
+  letter-spacing: -0.5pt;
+}
+
+.cv-title {
+  font-size: 12pt;
+  font-weight: 600;
+  color: var(--cv-accent-alt);
+  margin: 0 0 2.5mm 0;
+}
+
+.cv-contact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2mm;
+  font-size: 9.5pt;
+  color: var(--cv-text-secondary);
+  margin-bottom: 1.5mm;
+}
+
+.cv-contact-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1mm;
+}
+
+.cv-contact-sep {
+  color: var(--cv-muted);
+}
+
+.cv-social {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2.5mm;
+  font-size: 9pt;
+  color: var(--cv-text-secondary);
+}
+
+.cv-social-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1mm;
+}
+
+.cv-section {
+  margin-bottom: 4mm;
+}
+
+.cv-section-title {
+  font-size: 11.5pt;
+  font-weight: 700;
+  color: var(--cv-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+  border-bottom: 1.5px solid var(--cv-accent-alt);
+  padding-bottom: 1mm;
+  margin: 0 0 2mm 0;
+}
+
+.cv-text {
+  font-size: 10pt;
+  color: var(--cv-text-secondary);
+  margin: 0 0 2mm 0;
+  text-align: justify;
+}
+
+.cv-skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2mm;
+}
+
+.cv-skill-group {
+  break-inside: avoid;
+}
+
+.cv-skill-category {
+  font-size: 10.5pt;
+  font-weight: 600;
+  color: var(--cv-accent-alt);
+  margin: 0 0 0.5mm 0;
+}
+
+.cv-skill-items {
+  font-size: 9.5pt;
+  color: var(--cv-text-secondary);
+  margin: 0;
+}
+
+.cv-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5mm;
+}
+
+.cv-timeline-item {
+  break-inside: avoid;
+}
+
+.cv-timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.cv-timeline-title {
+  font-size: 10.5pt;
+  font-weight: 600;
+  color: var(--cv-text);
+  margin: 0;
+}
+
+.cv-timeline-year {
+  font-size: 9.5pt;
+  font-weight: 600;
+  color: var(--cv-accent);
+  white-space: nowrap;
+}
+
+.cv-timeline-subtitle {
+  font-size: 10pt;
+  font-weight: 500;
+  color: var(--cv-accent-alt);
+  margin: 0.5mm 0;
+}
+
+.cv-highlights {
+  margin: 1mm 0 0 0;
+  padding-left: 3mm;
+  font-size: 9.5pt;
+  color: var(--cv-text-secondary);
+}
+
+.cv-highlights li {
+  margin-bottom: 0.3mm;
+}
+
+.cv-project {
+  margin-bottom: 2.5mm;
+  break-inside: avoid;
+}
+
+.cv-project-title {
+  font-size: 10.5pt;
+  font-weight: 600;
+  color: var(--cv-text);
+  margin: 0 0 0.5mm 0;
+}
+
+.cv-project-tech {
+  font-size: 9pt;
+  color: var(--cv-text-secondary);
+  margin: 0.3mm 0 0 0;
+  line-height: 1.6;
+}
+
+.cv-project-tech span:not(:last-child)::after {
+  content: "  •  ";
+  color: var(--cv-muted);
+}
+
+.cv-languages {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5mm;
+}
+
+.cv-language-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  break-inside: avoid;
+}
+
+.cv-language-name {
+  font-size: 10pt;
+  font-weight: 600;
+  color: var(--cv-text);
+}
+
+.cv-language-level {
+  font-size: 9.5pt;
+  color: var(--cv-text-secondary);
+}
+
+.cv-edu-item {
+  margin-bottom: 2mm;
+  break-inside: avoid;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    orphans: 3;
+    widows: 2;
+  }
+
+  .cv-print-controls {
+    display: none !important;
+  }
+
+  .cv-page {
+    background: white !important;
+  }
+
+  .cv-sheet {
+    padding: 0;
+    max-width: none;
+    box-shadow: none;
+    border: none;
+  }
+
+  .cv-section {
+    page-break-inside: auto;
+  }
+
+  .cv-timeline-item,
+  .cv-project,
+  .cv-edu-item {
+    page-break-inside: avoid;
+  }
+}
+
+.dark .cv-page {
+  --cv-text: #EDEDF0;
+  --cv-text-secondary: #9B9EAD;
+  --cv-muted: #5C6072;
+  --cv-border: #252A3A;
+  --cv-accent: #256F6C;
+  --cv-accent-alt: #F1633D;
+  --cv-bg: #13161F;
+  --cv-surface: #0B0D14;
+}
+
+.dark .cv-print-controls {
+  background: #13161F;
+  border-color: #252A3A;
+}
