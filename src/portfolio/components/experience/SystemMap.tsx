@@ -170,6 +170,9 @@ export default function SystemMap({ animate, className }: SystemMapProps) {
       // Nodes.
       context.font = '500 11px "JetBrains Mono", ui-monospace, monospace'
       context.textBaseline = 'middle'
+      // Labels are technical identifiers: always left-to-right, even in Arabic.
+      context.direction = 'ltr'
+      context.textAlign = 'left'
       for (const node of nodes) {
         if (!node.label) {
           context.globalAlpha = 0.45

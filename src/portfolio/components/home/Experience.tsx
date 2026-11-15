@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { motion, useMotionValueEvent, useScroll } from 'framer-motion'
+import { m, useMotionValueEvent, useScroll } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
 import { useLanguage } from '@/shared/i18n'
 import { cn } from '@/shared/utils/cn'
@@ -42,7 +42,7 @@ function Timeline({ items }: { items: ExperienceVM[] }) {
   return (
     <ol ref={list} className="relative">
       <span aria-hidden className="absolute start-[7px] top-2 bottom-2 w-px bg-line" />
-      <motion.span
+      <m.span
         aria-hidden
         className="absolute start-[7px] top-2 bottom-2 w-px origin-top bg-signal"
         style={{ scaleY: scrollYProgress }}
@@ -63,7 +63,7 @@ function Timeline({ items }: { items: ExperienceVM[] }) {
             >
               <span className={cn('size-[5px] rounded-full transition-[transform,background-color] duration-500 ease-precise', lit ? 'scale-100 bg-signal' : 'scale-50 bg-line-strong')} />
             </span>
-            <motion.div
+            <m.div
               initial={{ opacity: 0, clipPath: lang === 'ar' ? 'inset(0% 0% 0% 100%)' : 'inset(0% 100% 0% 0%)' }}
               whileInView={{ opacity: 1, clipPath: 'inset(0% 0% 0% 0%)' }}
               viewport={{ once: true, margin: '0px 0px -15% 0px' }}
@@ -83,7 +83,7 @@ function Timeline({ items }: { items: ExperienceVM[] }) {
                   ))}
                 </ul>
               )}
-            </motion.div>
+            </m.div>
           </li>
         )
       })}

@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useLanguage } from '@/shared/i18n'
 import { cn } from '@/shared/utils/cn'
 import { SkillIcon } from '@/portfolio/components/ds'
@@ -85,7 +85,7 @@ export function ArchitectureDiagram({ nodes, edges, selected, onSelect }: Diagra
         {paths.map((path, index) => {
           const lit = neighbours.has(path.from) && neighbours.has(path.to) && (path.from === selected || path.to === selected)
           return (
-            <motion.path
+            <m.path
               key={path.key}
               d={path.d}
               fill="none"
@@ -117,7 +117,7 @@ export function ArchitectureDiagram({ nodes, edges, selected, onSelect }: Diagra
                   const isSelected = node.id === selected
                   const isNeighbour = !isSelected && neighbours.has(node.id)
                   return (
-                    <motion.button
+                    <m.button
                       key={node.id}
                       ref={(element) => {
                         if (element) nodeRefs.current.set(node.id, element)
@@ -144,7 +144,7 @@ export function ArchitectureDiagram({ nodes, edges, selected, onSelect }: Diagra
                         aria-hidden
                         className={cn('size-1.5 rounded-full', isSelected ? 'bg-signal' : isNeighbour ? 'bg-circuit' : 'bg-line-strong')}
                       />
-                    </motion.button>
+                    </m.button>
                   )
                 })}
             </div>

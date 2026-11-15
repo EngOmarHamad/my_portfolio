@@ -1,5 +1,5 @@
 import { useRef, type PointerEvent, type ReactNode } from 'react'
-import { motion, useMotionValue, useSpring } from 'framer-motion'
+import { m, useMotionValue, useSpring } from 'framer-motion'
 import { useFinePointer, usePrefersReducedMotion } from '@/portfolio/lib/environment'
 import { cn } from '@/shared/utils/cn'
 
@@ -37,7 +37,7 @@ export function Magnetic({ children, className, strength = MAX_PULL }: MagneticP
   }
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       className={cn('inline-flex', className)}
       style={active ? { x, y } : undefined}
@@ -45,6 +45,6 @@ export function Magnetic({ children, className, strength = MAX_PULL }: MagneticP
       onPointerLeave={reset}
     >
       {children}
-    </motion.div>
+    </m.div>
   )
 }

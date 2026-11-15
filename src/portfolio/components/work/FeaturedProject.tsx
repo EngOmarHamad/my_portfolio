@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
 import { useLanguage } from '@/shared/i18n'
 import { Reveal, Tag } from '@/portfolio/components/ds'
@@ -15,7 +15,7 @@ export function FeaturedProject({ project, onOpen }: { project: ProjectVM; onOpe
   return (
     <article className="grid items-center gap-8 lg:grid-cols-12 lg:gap-8">
       <Reveal variant="clip" className="lg:col-span-7">
-        <motion.a
+        <m.a
           href={`/projects/${project.routeId}`}
           onClick={(event) => {
             if (!isPlainClick(event)) return
@@ -32,7 +32,7 @@ export function FeaturedProject({ project, onOpen }: { project: ProjectVM; onOpe
           <div className="size-full transition-transform duration-700 ease-precise group-hover:scale-105">
             <ProjectCover project={project} size="feature" />
           </div>
-        </motion.a>
+        </m.a>
       </Reveal>
 
       <div className="lg:col-span-5">

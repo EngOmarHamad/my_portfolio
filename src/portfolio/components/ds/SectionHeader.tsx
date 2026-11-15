@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { cn } from '@/shared/utils/cn'
 import { REVEAL_VIEWPORT, transition, DURATION } from '@/portfolio/lib/motion'
 import { RevealWords } from './Reveal'
@@ -18,7 +18,7 @@ export function SectionHeader({ id, index, label, title, intro, className, as = 
   const Heading = as
   return (
     <header className={cn('mb-12 max-w-4xl md:mb-16', className)}>
-      <motion.p
+      <m.p
         className="label-mono flex items-center gap-3 text-ink-muted"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -28,12 +28,12 @@ export function SectionHeader({ id, index, label, title, intro, className, as = 
         <span className="text-signal-ink">// {index}</span>
         <span aria-hidden className="h-px w-8 bg-line-strong" />
         <span>{label}</span>
-      </motion.p>
+      </m.p>
       <Heading id={`${id}-title`} className="display-tight mt-6 text-h2 text-balance text-ink">
         <RevealWords text={title} />
       </Heading>
       {intro && (
-        <motion.p
+        <m.p
           className="mt-6 max-w-prose text-body text-pretty text-ink-muted"
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -41,7 +41,7 @@ export function SectionHeader({ id, index, label, title, intro, className, as = 
           transition={transition(DURATION.base, 0.2)}
         >
           {intro}
-        </motion.p>
+        </m.p>
       )}
     </header>
   )

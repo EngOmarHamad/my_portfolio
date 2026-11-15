@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useLanguage } from '@/shared/i18n'
 import { cn } from '@/shared/utils/cn'
 import { Reveal, Section, SectionHeader, SkillIcon } from '@/portfolio/components/ds'
@@ -54,7 +54,7 @@ export function Skills() {
                 {group.skills.map((skill, index) => {
                   const lit = traced.has(skill.name.toLowerCase())
                   return (
-                    <motion.li
+                    <m.li
                       key={skill.id}
                       className={cn(
                         'inline-flex min-h-9 items-center gap-2 rounded-chip border px-3 text-sm transition-colors duration-200',
@@ -67,7 +67,7 @@ export function Skills() {
                     >
                       <SkillIcon name={skill.name} icon={skill.icon} className={lit ? 'text-signal-ink' : undefined} />
                       {skill.name}
-                    </motion.li>
+                    </m.li>
                   )
                 })}
               </ul>

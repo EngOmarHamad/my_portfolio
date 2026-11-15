@@ -1,5 +1,5 @@
 import { useEffect, useSyncExternalStore } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { Check } from 'lucide-react'
 import { transition } from '@/portfolio/lib/motion'
 import { dismissToast, getToasts, subscribeToasts, type ToastItem } from '@/portfolio/lib/toast-store'
@@ -11,7 +11,7 @@ function ToastRow({ item }: { item: ToastItem }) {
   }, [item.id])
 
   return (
-    <motion.li
+    <m.li
       layout
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
@@ -23,7 +23,7 @@ function ToastRow({ item }: { item: ToastItem }) {
         <Check className="size-3" aria-hidden />
       </span>
       {item.message}
-    </motion.li>
+    </m.li>
   )
 }
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { motion, useMotionValueEvent, useScroll } from 'framer-motion'
+import { m, useMotionValueEvent, useScroll } from 'framer-motion'
 import { useLanguage } from '@/shared/i18n'
 import { cn } from '@/shared/utils/cn'
 import { Container, Magnetic, Monogram } from '@/portfolio/components/ds'
@@ -41,7 +41,7 @@ export function Navbar() {
 
   return (
     <>
-      <motion.header
+      <m.header
         className={cn(
           'fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color,backdrop-filter] duration-500 ease-precise',
           solid || menuOpen ? 'border-line bg-canvas/80 backdrop-blur-md' : 'border-transparent bg-transparent',
@@ -76,7 +76,7 @@ export function Navbar() {
                       <span className="font-mono text-label text-ink-faint">0{index + 1}</span>
                       {t.site.nav[id]}
                       {isActive && (
-                        <motion.span
+                        <m.span
                           layoutId="nav-underline"
                           className="absolute inset-x-4 bottom-2 h-px bg-signal"
                           transition={transition(0.5)}
@@ -117,7 +117,7 @@ export function Navbar() {
             </button>
           </div>
         </Container>
-      </motion.header>
+      </m.header>
       <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} active={active} />
     </>
   )

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { ArrowUpRight, X } from 'lucide-react'
 import { useLanguage } from '@/shared/i18n'
 import type { ProjectVM } from '@/portfolio/data/types'
@@ -32,7 +32,7 @@ function Dialog({ project, onClose }: { project: ProjectVM; onClose: () => void 
 
   return (
     <div className="fixed inset-0 z-[80]">
-      <motion.div
+      <m.div
         aria-hidden
         className="absolute inset-0 bg-(--scrim) backdrop-blur-sm"
         initial={{ opacity: 0 }}
@@ -41,7 +41,7 @@ function Dialog({ project, onClose }: { project: ProjectVM; onClose: () => void 
         transition={transition(DURATION.base)}
         onClick={onClose}
       />
-      <motion.div
+      <m.div
         ref={panel}
         role="dialog"
         aria-modal="true"
@@ -71,7 +71,7 @@ function Dialog({ project, onClose }: { project: ProjectVM; onClose: () => void 
         <div className="px-6 py-8 md:px-12 md:py-12">
           <CaseStudyContent project={project} titleId={titleId} />
         </div>
-      </motion.div>
+      </m.div>
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { forwardRef, useMemo, useState, type InputHTMLAttributes, type TextareaH
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { AlertTriangle, ArrowRight, Check, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/shared/i18n'
 import { cn } from '@/shared/utils/cn'
@@ -112,7 +112,7 @@ export function ContactForm({ email }: { email: string }) {
     <div className="relative">
       <AnimatePresence mode="wait" initial={false}>
         {status === 'success' ? (
-          <motion.div
+          <m.div
             key="success"
             role="status"
             className="rounded-card border border-line bg-panel p-8"
@@ -129,9 +129,9 @@ export function ContactForm({ email }: { email: string }) {
             <button type="button" onClick={() => setStatus('idle')} className="link-wipe mt-6 min-h-11 text-sm text-ink">
               {copy.again}
             </button>
-          </motion.div>
+          </m.div>
         ) : (
-          <motion.form
+          <m.form
             key="form"
             id="contact-form"
             noValidate
@@ -181,7 +181,7 @@ export function ContactForm({ email }: { email: string }) {
                 </>
               )}
             </button>
-          </motion.form>
+          </m.form>
         )}
       </AnimatePresence>
     </div>

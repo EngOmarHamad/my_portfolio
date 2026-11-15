@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { ArrowDownRight, Download } from 'lucide-react'
 import { useLanguage } from '@/shared/i18n'
 import { Button, Container, Magnetic, RevealWords } from '@/portfolio/components/ds'
@@ -51,7 +51,7 @@ export function Hero() {
       </div>
 
       <Container className="flex flex-1 flex-col justify-center py-16">
-        <motion.div
+        <m.div
           className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: play ? 1 : 0 }}
@@ -62,7 +62,7 @@ export function Hero() {
             {profile.availability || (profile.isAvailable ? t.site.hero.available : t.site.hero.unavailable)}
           </span>
           <span className="label-mono hidden text-ink-faint sm:inline">{profile.coordinates}</span>
-        </motion.div>
+        </m.div>
 
         <h1 id="hero-title" className="max-w-5xl font-display text-hero font-bold display-tight text-ink">
           <RevealWords text={name} play={play} />
@@ -72,24 +72,25 @@ export function Hero() {
         </h1>
 
         {detail && (
-          <motion.p
+          <m.p
             className="mt-4 font-mono text-label text-ink-faint"
             initial={{ opacity: 0 }}
             animate={{ opacity: play ? 1 : 0 }}
             transition={transition(DURATION.base, afterHeadline)}
           >
             {detail}
-          </motion.p>
+          </m.p>
         )}
 
-        <motion.div
-          className="mt-12 max-w-xl"
-          initial={{ opacity: 0, y: 16 }}
-          animate={play ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-          transition={transition(DURATION.slow, afterHeadline)}
-        >
+        <div className="mt-12 max-w-xl">
+          {/* Painted immediately (it is the LCP element); only the actions animate in. */}
           <p className="text-body text-pretty text-ink-muted">{t.site.hero.statement}</p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
+          <m.div
+            className="mt-8 flex flex-wrap items-center gap-4"
+            initial={{ opacity: 0, y: 16 }}
+            animate={play ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+            transition={transition(DURATION.slow, afterHeadline)}
+          >
             <Magnetic>
               <Button
                 href="/#work"
@@ -113,12 +114,12 @@ export function Hero() {
                 <Download className="size-4" aria-hidden />
               </Button>
             )}
-          </div>
-        </motion.div>
+          </m.div>
+        </div>
       </Container>
 
       <Container className="pb-8">
-        <motion.div
+        <m.div
           className="flex items-end justify-between border-t border-line pt-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: play ? 1 : 0 }}
@@ -141,7 +142,7 @@ export function Hero() {
             {t.site.hero.based}
             <span className="block text-ink-muted">{profile.location}</span>
           </p>
-        </motion.div>
+        </m.div>
       </Container>
     </section>
   )

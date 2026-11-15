@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
+import { AnimatePresence, LayoutGroup, m } from 'framer-motion'
 import { useLanguage } from '@/shared/i18n'
 import { cn } from '@/shared/utils/cn'
 import type { ProjectVM } from '@/portfolio/data/types'
@@ -33,17 +33,17 @@ export function ProjectGrid({ projects, onOpen }: { projects: ProjectVM[]; onOpe
                 <span className="ms-2 font-mono text-label text-ink-faint">
                   {category === ALL ? projects.length : projects.filter((project) => project.category === category).length}
                 </span>
-                {active && <motion.span layoutId="work-filter" className="absolute inset-x-0 -bottom-px h-px bg-signal" transition={transition(DURATION.base)} />}
+                {active && <m.span layoutId="work-filter" className="absolute inset-x-0 -bottom-px h-px bg-signal" transition={transition(DURATION.base)} />}
               </button>
             )
           })}
         </div>
       )}
 
-      <motion.ul layout className="grid gap-6 md:grid-cols-2 lg:gap-8">
+      <m.ul layout className="grid gap-6 md:grid-cols-2 lg:gap-8">
         <AnimatePresence mode="popLayout" initial={false}>
           {visible.map((project, index) => (
-            <motion.li
+            <m.li
               key={project.id}
               layout
               initial={{ opacity: 0, scale: 0.96 }}
@@ -53,10 +53,10 @@ export function ProjectGrid({ projects, onOpen }: { projects: ProjectVM[]; onOpe
               className="min-w-0"
             >
               <ProjectCard project={project} index={index} onOpen={onOpen} />
-            </motion.li>
+            </m.li>
           ))}
         </AnimatePresence>
-      </motion.ul>
+      </m.ul>
       {visible.length === 0 && <p className="py-16 text-center text-ink-muted">{t.site.work.empty}</p>}
     </LayoutGroup>
   )

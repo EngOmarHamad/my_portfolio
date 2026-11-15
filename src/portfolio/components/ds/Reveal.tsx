@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { DURATION, EASE, REVEAL_VIEWPORT, STAGGER, transition } from '@/portfolio/lib/motion'
 
 type RevealVariant = 'fade' | 'clip' | 'rise'
@@ -23,7 +23,7 @@ const VARIANTS = {
 
 /** Scroll-triggered reveal; each section picks a different variant on purpose. */
 export function Reveal({ children, variant = 'rise', delay = 0, className, as = 'div' }: RevealProps) {
-  const Component = motion[as]
+  const Component = m[as]
   return (
     <Component
       className={className}
@@ -55,7 +55,7 @@ export function RevealWords({ text, play, delay = 0, className }: RevealWordsPro
   const trigger = play === undefined ? { whileInView: 'shown' as const, viewport: REVEAL_VIEWPORT } : { animate: play ? 'shown' : 'hidden' }
 
   return (
-    <motion.span
+    <m.span
       className={className}
       initial="hidden"
       {...trigger}
@@ -64,7 +64,7 @@ export function RevealWords({ text, play, delay = 0, className }: RevealWordsPro
       <span className="sr-only">{text}</span>
       {words.map((word, index) => (
         <span key={`${word}-${index}`} aria-hidden className="inline-block overflow-hidden pb-[0.08em] align-bottom">
-          <motion.span
+          <m.span
             className="inline-block will-change-transform"
             variants={{
               hidden: { y: '0.6em', opacity: 0, clipPath: 'inset(0% 0% 100% 0%)' },
@@ -73,10 +73,10 @@ export function RevealWords({ text, play, delay = 0, className }: RevealWordsPro
             transition={{ duration: DURATION.slow, ease: EASE }}
           >
             {word}
-          </motion.span>
+          </m.span>
           {index < words.length - 1 && ' '}
         </span>
       ))}
-    </motion.span>
+    </m.span>
   )
 }

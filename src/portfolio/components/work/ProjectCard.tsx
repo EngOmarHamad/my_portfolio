@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
 import { useLanguage } from '@/shared/i18n'
 import { Tag } from '@/portfolio/components/ds'
@@ -18,7 +18,7 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
   const tilt = useTilt()
 
   return (
-    <motion.a
+    <m.a
       href={`/projects/${project.routeId}`}
       onClick={(event) => {
         if (!isPlainClick(event)) return
@@ -47,7 +47,7 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
         <p className="line-clamp-2 text-sm text-ink-muted">{project.summary}</p>
         <ul className="flex flex-wrap gap-2">
           {project.technologies.slice(0, 4).map((tech, tagIndex) => (
-            <motion.li
+            <m.li
               key={tech}
               initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -55,7 +55,7 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
               transition={{ duration: DURATION.base, ease: EASE, delay: 0.2 + tagIndex * 0.05 }}
             >
               <Tag>{tech}</Tag>
-            </motion.li>
+            </m.li>
           ))}
           {project.technologies.length > 4 && (
             <li>
@@ -68,6 +68,6 @@ export function ProjectCard({ project, index, onOpen }: ProjectCardProps) {
           <ArrowUpRight className="size-4 transition-transform duration-500 ease-precise group-hover:translate-x-0.5 group-hover:-translate-y-0.5 rtl:-scale-x-100" aria-hidden />
         </span>
       </div>
-    </motion.a>
+    </m.a>
   )
 }

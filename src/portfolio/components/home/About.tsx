@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useLanguage } from '@/shared/i18n'
 import { Counter, Reveal, Section, SectionHeader } from '@/portfolio/components/ds'
 import { useSiteContent } from '@/portfolio/hooks/use-site-content'
@@ -20,7 +20,7 @@ function Portrait({ profile, caption }: { profile: ProfileVM; caption: string })
     <figure className="relative">
       <div className="relative p-3">
         {CORNERS.map((position, index) => (
-          <motion.span
+          <m.span
             key={position}
             aria-hidden
             className={`absolute size-6 border-signal ${position}`}
@@ -87,7 +87,7 @@ export function About() {
           {stats.length > 0 && (
             <dl className="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-chip border border-line bg-line sm:grid-cols-4">
               {stats.map((stat, index) => (
-                <motion.div
+                <m.div
                   key={stat.id}
                   className="bg-canvas p-4 sm:p-6"
                   initial={{ opacity: 0 }}
@@ -99,7 +99,7 @@ export function About() {
                   <dd className="mt-2 font-display text-h3 font-semibold text-ink">
                     <Counter value={stat.value} decimals={stat.decimals} prefix={stat.prefix} suffix={stat.suffix} />
                   </dd>
-                </motion.div>
+                </m.div>
               ))}
             </dl>
           )}

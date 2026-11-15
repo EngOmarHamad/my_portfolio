@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { ArrowUpRight, Search } from 'lucide-react'
 import { useLanguage } from '@/shared/i18n'
 import { cn } from '@/shared/utils/cn'
@@ -55,7 +55,7 @@ export function BlogPage() {
               className={cn('relative min-h-11 px-4 text-sm transition-colors', tag === item ? 'text-ink' : 'text-ink-muted hover:text-ink')}
             >
               {item === ALL ? copy.all : item}
-              {tag === item && <motion.span layoutId="blog-filter" className="absolute inset-x-0 -bottom-px h-px bg-signal" transition={transition()} />}
+              {tag === item && <m.span layoutId="blog-filter" className="absolute inset-x-0 -bottom-px h-px bg-signal" transition={transition()} />}
             </button>
           ))}
         </div>
@@ -76,10 +76,10 @@ export function BlogPage() {
       {isError && <StatusMessage role="alert">{t.site.pages.error}</StatusMessage>}
       {!isLoading && !isError && filtered.length === 0 && <StatusMessage>{copy.empty}</StatusMessage>}
 
-      <motion.ul layout className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <m.ul layout className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence mode="popLayout" initial={false}>
           {filtered.map((post) => (
-            <motion.li
+            <m.li
               key={post.id}
               layout
               initial={{ opacity: 0 }}
@@ -112,10 +112,10 @@ export function BlogPage() {
                   <ArrowUpRight className="size-4 rtl:-scale-x-100" aria-hidden />
                 </span>
               </SpotlightCard>
-            </motion.li>
+            </m.li>
           ))}
         </AnimatePresence>
-      </motion.ul>
+      </m.ul>
     </PageShell>
   )
 }

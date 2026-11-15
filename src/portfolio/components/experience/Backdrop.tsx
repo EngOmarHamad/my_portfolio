@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { m, useScroll, useTransform } from 'framer-motion'
 import { usePrefersReducedMotion } from '@/portfolio/lib/environment'
 
 const CELL = 64
@@ -15,7 +15,7 @@ export function Backdrop() {
   return (
     <>
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <motion.div className="bg-blueprint absolute -inset-x-0 -top-16 -bottom-16" style={{ y }} />
+        <m.div className="bg-blueprint absolute -inset-x-0 -top-16 -bottom-16" style={{ y }} />
       </div>
       <div
         aria-hidden

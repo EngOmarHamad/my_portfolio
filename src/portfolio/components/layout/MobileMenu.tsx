@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, m } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useLanguage } from '@/shared/i18n'
 import { cn } from '@/shared/utils/cn'
@@ -41,7 +41,7 @@ export function MobileMenu({ open, onClose, active }: MobileMenuProps) {
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           ref={panel}
           id="mobile-menu"
           role="dialog"
@@ -72,7 +72,7 @@ export function MobileMenu({ open, onClose, active }: MobileMenuProps) {
               <ol className="space-y-1">
                 {HOME_SECTIONS.map((id, index) => (
                   <li key={id} className="overflow-hidden">
-                    <motion.a
+                    <m.a
                       href={`/#${id}`}
                       onClick={(event) => {
                         event.preventDefault()
@@ -86,13 +86,13 @@ export function MobileMenu({ open, onClose, active }: MobileMenuProps) {
                     >
                       <span className="font-mono text-label text-ink-faint">0{index + 1}</span>
                       {t.site.nav[id]}
-                    </motion.a>
+                    </m.a>
                   </li>
                 ))}
               </ol>
             </nav>
 
-            <motion.div
+            <m.div
               className="mt-12 space-y-6 border-t border-line pt-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -121,9 +121,9 @@ export function MobileMenu({ open, onClose, active }: MobileMenuProps) {
                   {t.site.nav.hire}
                 </a>
               </div>
-            </motion.div>
+            </m.div>
           </Container>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   )
