@@ -1,16 +1,14 @@
 import { useSyncExternalStore } from 'react'
 
-function getReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
-
-function subscribe(callback: () => void) {
-  const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-  mq.addEventListener('change', callback)
-  return () => mq.removeEventListener('change', callback)
-}
-
+/**
+ * The site intentionally ALWAYS plays its animations.
+ * OS-level "reduce motion" preferences are ignored by design —
+ * the motion language here is functional and subtle.
+ */
 export function useReducedMotion() {
-  return useSyncExternalStore(subscribe, getReducedMotion)
+  return useSyncExternalStore(
+    () => () => {},
+    () => false,
+    () => false,
+  )
 }

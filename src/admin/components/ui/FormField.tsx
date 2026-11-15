@@ -1,5 +1,11 @@
 import type { ReactNode } from 'react'
+import { Form, Input as AntdInput, Select as AntdSelect, Switch, Typography } from 'antd'
+import type { InputProps as AntdInputProps, SelectProps as AntdSelectProps } from 'antd'
 import { cn } from '@/utils/cn'
+
+/* ------------------------------------------------------------------ */
+/* FormField — label/help/error wrapper built on Ant Design Form.Item  */
+/* ------------------------------------------------------------------ */
 
 interface FormFieldProps {
   label: string
@@ -12,94 +18,78 @@ interface FormFieldProps {
 
 export function FormField({ label, error, children, required, className, description }: FormFieldProps) {
   return (
-    <div className={cn('space-y-1.5', className)}>
-      <label className="block text-sm font-medium text-[var(--color-text)]">
-        {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
-      {description && (
-        <p className="text-xs text-[var(--color-text-tertiary)]">{description}</p>
-      )}
+    <Form.Item
+      label={label}
+      required={required}
+      help={error || description}
+      validateStatus={error ? 'error' : undefined}
+      className={cn('mb-5', className)}
+    >
       {children}
-      {error && (
-        <p className="text-xs text-red-500">{error}</p>
-      )}
-    </div>
+    </Form.Item>
   )
 }
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+/* ------------------------------------------------------------------ */
+/* Input                                                               */
+/* ------------------------------------------------------------------ */
+
+interface InputProps extends Omit<AntdInputProps, 'size'> {
   label: string
   error?: string
+  description?: string
+  required?: boolean
 }
 
-export function Input({ label, error, className, id, ...props }: InputProps) {
+export function Input({ label, error, description, required, className, ...props }: InputProps) {
   return (
-    <FormField label={label} error={error} required={props.required}>
-      <input
-        id={id}
-        className={cn(
-          'w-full px-3 py-2 text-sm rounded-lg border bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-tertiary)] transition-all',
-          'focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]',
-          error ? 'border-red-500' : 'border-[var(--color-border)]',
-          className
-        )}
-        {...props}
-      />
+    <FormField label={label} error={error} required={required} description={description}>
+      <AntdInput className={className} {...props} />
     </FormField>
   )
 }
 
-interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface TextareaProps extends Omit<React.ComponentProps<typeof AntdInput.TextArea>, 'size'> {
   label: string
   error?: string
+  description?: string
+  required?: boolean
 }
 
-export function Textarea({ label, error, className, id, ...props }: TextareaProps) {
+export function Textarea({ label, error, description, required, className, ...props }: TextareaProps) {
   return (
-    <FormField label={label} error={error} required={props.required}>
-      <textarea
-        id={id}
-        className={cn(
-          'w-full px-3 py-2 text-sm rounded-lg border bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-tertiary)] transition-all resize-y min-h-[100px]',
-          'focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]',
-          error ? 'border-red-500' : 'border-[var(--color-border)]',
-          className
-        )}
-        {...props}
-      />
+    <FormField label={label} error={error} required={required} description={description}>
+      <AntdInput.TextArea className={className} autoSize={{ minRows: 4, maxRows: 12 }} {...props} />
     </FormField>
   )
 }
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+/* ------------------------------------------------------------------ */
+/* Select                                                              */
+/* ------------------------------------------------------------------ */
+
+interface SelectProps extends Omit<AntdSelectProps, 'options'> {
   label: string
   error?: string
+  description?: string
+  required?: boolean
+  /** Legacy pages pass `name` for native form submission — accepted for compatibility. */
+  name?: string
   options: { value: string; label: string }[]
   placeholder?: string
 }
 
-export function Select({ label, error, options, placeholder, className, id, ...props }: SelectProps) {
+export function Select({ label, error, description, required, options, placeholder, className, ...props }: SelectProps) {
   return (
-    <FormField label={label} error={error} required={props.required}>
-      <select
-        id={id}
-        className={cn(
-          'w-full px-3 py-2 text-sm rounded-lg border bg-[var(--color-surface)] text-[var(--color-text)] transition-all',
-          'focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)]',
-          error ? 'border-red-500' : 'border-[var(--color-border)]',
-          className
-        )}
-        {...props}
-      >
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
+    <FormField label={label} error={error} required={required} description={description}>
+      <AntdSelect className={className} options={options} placeholder={placeholder} {...props} />
     </FormField>
   )
 }
+
+/* ------------------------------------------------------------------ */
+/* Toggle — Ant Design Switch                                           */
+/* ------------------------------------------------------------------ */
 
 interface ToggleProps {
   label: string
@@ -110,30 +100,16 @@ interface ToggleProps {
 
 export function Toggle({ label, checked, onChange, description }: ToggleProps) {
   return (
-    <div className="flex items-center justify-between py-2">
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
       <div>
-        <span className="text-sm font-medium text-[var(--color-text)]">{label}</span>
+        <Typography.Text style={{ fontSize: 14 }}>{label}</Typography.Text>
         {description && (
-          <p className="text-xs text-[var(--color-text-tertiary)]">{description}</p>
+          <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 0, marginTop: 2 }}>
+            {description}
+          </Typography.Paragraph>
         )}
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={cn(
-          'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-          checked ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-muted)]'
-        )}
-      >
-        <span
-          className={cn(
-            'pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform ring-0 transition-transform',
-            checked ? 'translate-x-4' : 'translate-x-0'
-          )}
-        />
-      </button>
+      <Switch checked={checked} onChange={onChange} />
     </div>
   )
 }

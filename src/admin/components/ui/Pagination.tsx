@@ -1,66 +1,95 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { cn } from '@/utils/cn'
+import { Pagination as AntdPagination, theme } from 'antd'
 
 interface PaginationProps {
   page: number
   pageSize: number
   total: number
   onPageChange: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
 }
 
-export function Pagination({ page, pageSize, total, onPageChange }: PaginationProps) {
-  const totalPages = Math.ceil(total / pageSize)
-
-  if (totalPages <= 1) return null
-
-  const pages: (number | 'ellipsis')[] = []
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
-      pages.push(i)
-    } else if (pages[pages.length - 1] !== 'ellipsis') {
-      pages.push('ellipsis')
-    }
-  }
+export function Pagination({ page, pageSize, total, onPageChange, onPageSizeChange }: PaginationProps) {
+  const { token } = theme.useToken()
+  if (total <= 0) return null
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)]">
-      <p className="text-sm text-[var(--color-text-secondary)]">
-        Showing {Math.min((page - 1) * pageSize + 1, total)} to {Math.min(page * pageSize, total)} of {total}
-      </p>
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1}
-          className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        {pages.map((p, i) =>
-          p === 'ellipsis' ? (
-            <span key={`e-${i}`} className="px-2 text-sm text-[var(--color-text-tertiary)]">...</span>
-          ) : (
-            <button
-              key={p}
-              onClick={() => onPageChange(p)}
-              className={cn(
-                'min-w-[32px] h-8 rounded-lg text-sm font-medium transition-colors',
-                p === page
-                  ? 'bg-[var(--color-primary)] text-white'
-                  : 'hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)]'
-              )}
-            >
-              {p}
-            </button>
-          )
-        )}
-        <button
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages}
-          className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
+    <div
+      className="admin-pagination"
+      style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        padding: '14px 2px 4px',
+      }}
+    >
+      <style>{`
+        .admin-pagination .ant-pagination {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+        .admin-pagination .ant-pagination-total-text {
+          color: ${token.colorTextSecondary};
+          font-size: 13px;
+          margin-inline-end: 8px !important;
+          height: 32px;
+          line-height: 32px;
+        }
+        .admin-pagination .ant-pagination-item {
+          border-radius: 10px;
+          border-color: ${token.colorBorderSecondary};
+          background: ${token.colorBgContainer};
+          font-weight: 500;
+        }
+        .admin-pagination .ant-pagination-item a {
+          color: ${token.colorTextSecondary};
+        }
+        .admin-pagination .ant-pagination-item:hover {
+          border-color: ${token.colorPrimary};
+        }
+        .admin-pagination .ant-pagination-item:hover a {
+          color: ${token.colorPrimary};
+        }
+        .admin-pagination .ant-pagination-item-active {
+          border-color: ${token.colorPrimary} !important;
+          background: ${token.colorPrimary} !important;
+          font-weight: 600;
+        }
+        .admin-pagination .ant-pagination-item-active a,
+        .admin-pagination .ant-pagination-item-active:hover a {
+          color: #fff !important;
+        }
+        .admin-pagination .ant-pagination-prev .ant-pagination-item-link,
+        .admin-pagination .ant-pagination-next .ant-pagination-item-link,
+        .admin-pagination .ant-pagination-jump-prev .ant-pagination-item-link,
+        .admin-pagination .ant-pagination-jump-next .ant-pagination-item-link {
+          border-radius: 10px;
+          border-color: ${token.colorBorderSecondary};
+          color: ${token.colorTextSecondary};
+        }
+        .admin-pagination .ant-pagination-prev:hover .ant-pagination-item-link,
+        .admin-pagination .ant-pagination-next:hover .ant-pagination-item-link {
+          border-color: ${token.colorPrimary};
+          color: ${token.colorPrimary};
+        }
+        .admin-pagination .ant-pagination-disabled .ant-pagination-item-link {
+          color: ${token.colorTextQuaternary ?? token.colorTextTertiary} !important;
+        }
+        .admin-pagination .ant-select-selector {
+          border-radius: 10px !important;
+        }
+      `}</style>
+      <AntdPagination
+        current={page}
+        pageSize={pageSize}
+        total={total}
+        onChange={onPageChange}
+        onShowSizeChange={onPageSizeChange ? (_current, size) => onPageSizeChange(size) : undefined}
+        showSizeChanger={Boolean(onPageSizeChange)}
+        showTotal={(t, range) => `Showing ${range[0]}–${range[1]} of ${t}`}
+        responsive
+      />
     </div>
   )
 }

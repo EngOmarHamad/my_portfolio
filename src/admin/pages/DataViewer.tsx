@@ -1,14 +1,47 @@
 import { useEffect, useState } from 'react'
+import { Alert, Button, Empty, Menu, Spin, Typography } from 'antd'
+import { ReloadOutlined } from '@ant-design/icons'
 import { supabase } from '@/admin/lib/supabase'
+import { PageHeader } from '@/admin/components/ui/PageHeader'
+import { DataTable } from '@/admin/components/ui/DataTable'
+import type { Column } from '@/admin/components/ui/DataTable'
 
 const TABLES = [
   'hero', 'about', 'skill_categories', 'skills', 'projects',
   'project_images', 'services', 'experience', 'education',
   'certificates', 'testimonials', 'achievements', 'blog_posts',
   'gallery_categories', 'gallery_images', 'contact_info',
-  'contact_messages', 'social_links', 'tech_stack', 'timeline_items',
+  'contact_messages', 'social_links', 'timeline_items',
   'resume', 'seo', 'settings',
 ]
+
+type ViewerRow = Record<string, unknown>
+
+const renderCell = (val: unknown) => {
+  if (val === null) {
+    return (
+      <Typography.Text type="secondary" italic>
+        NULL
+      </Typography.Text>
+    )
+  }
+  if (typeof val === 'object') {
+    return (
+      <pre style={{ fontSize: 12, whiteSpace: 'pre-wrap', maxHeight: 96, overflowY: 'auto', margin: 0 }}>
+        {JSON.stringify(val, null, 1)}
+      </pre>
+    )
+  }
+  return (
+    <Typography.Text
+      type="secondary"
+      ellipsis
+      style={{ display: 'block', maxWidth: 260 }}
+    >
+      {String(val)}
+    </Typography.Text>
+  )
+}
 
 export function DataViewerPage() {
   const [data, setData] = useState<Record<string, unknown[]>>({})
@@ -40,87 +73,69 @@ export function DataViewerPage() {
     setLoading(false)
   }
 
-  const selectedData = data[selectedTable] || []
+  const selectedData = (data[selectedTable] || []) as ViewerRow[]
+
+  const firstRow = selectedData[0]
+  const columns: Column<ViewerRow>[] = firstRow
+    ? Object.keys(firstRow).map((key) => ({
+        key,
+        header: key,
+        render: (row: ViewerRow) => renderCell(row[key]),
+      }))
+    : []
 
   return (
-    <div className="p-6 max-w-full">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">Supabase Data Viewer</h1>
-          <p className="text-sm text-[var(--color-text-secondary)] mt-1">Browse all database tables</p>
-        </div>
-        <button
-          onClick={loadAll}
-          className="px-4 py-2 text-sm rounded-lg bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)] transition-colors"
-        >
-          Refresh All
-        </button>
-      </div>
+    <div>
+      <PageHeader
+        title="Supabase Data Viewer"
+        description="Browse all database tables"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Data Viewer' }]}
+        actions={
+          <Button icon={<ReloadOutlined />} onClick={loadAll} loading={loading}>
+            Refresh All
+          </Button>
+        }
+      />
 
       {error && (
-        <div className="p-4 mb-4 rounded-xl bg-red-500/10 border border-red-500/20">
-          <p className="text-sm text-red-500">{error}</p>
-        </div>
+        <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />
       )}
 
-      <div className="flex gap-4">
-        <div className="w-56 shrink-0 space-y-1">
-          {TABLES.map((table) => (
-            <button
-              key={table}
-              onClick={() => setSelectedTable(table)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                selectedTable === table
-                  ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium'
-                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)]'
-              }`}
-            >
-              {table}
-              <span className="ml-2 text-xs opacity-60">({data[table]?.length ?? '-'})</span>
-            </button>
-          ))}
-        </div>
+      <div style={{ display: 'flex', gap: 16 }}>
+        <Menu
+          mode="inline"
+          style={{ width: 220, flexShrink: 0 }}
+          selectedKeys={[selectedTable]}
+          onClick={(e) => setSelectedTable(e.key)}
+          items={TABLES.map((table) => ({
+            key: table,
+            label: `${table} (${data[table]?.length ?? '-'})`,
+          }))}
+        />
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-lg font-semibold text-[var(--color-text)]">{selectedTable}</h2>
-            <span className="text-sm text-[var(--color-text-tertiary)]">{selectedData.length} rows</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <Typography.Title level={5} style={{ margin: 0 }}>
+              {selectedTable}
+            </Typography.Title>
+            <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+              {selectedData.length} rows
+            </Typography.Text>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="h-8 w-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
+              <Spin size="large" />
             </div>
           ) : selectedData.length === 0 ? (
-            <div className="py-20 text-center text-sm text-[var(--color-text-tertiary)]">No data</div>
+            <Empty description="No data" style={{ padding: '64px 24px' }} />
           ) : (
-            <div className="overflow-auto max-h-[75vh] border border-[var(--color-border)] rounded-xl">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-[var(--color-surface)] border-b border-[var(--color-border)]">
-                    {Object.keys(selectedData[0] as Record<string, unknown>).map((col) => (
-                      <th key={col} className="px-3 py-2 text-left font-medium text-[var(--color-text)] whitespace-nowrap">
-                        {col}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedData.map((row, i) => (
-                    <tr key={i} className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface)]/50">
-                      {Object.values(row as Record<string, unknown>).map((val, j) => (
-                        <td key={j} className="px-3 py-2 text-[var(--color-text-secondary)] max-w-xs truncate">
-                          {val === null ? <span className="text-[var(--color-text-tertiary)]">NULL</span>
-                          : typeof val === 'object' ? (
-                            <pre className="text-xs whitespace-pre-wrap max-h-24 overflow-y-auto">{JSON.stringify(val, null, 1)}</pre>
-                          ) : String(val)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              columns={columns}
+              data={selectedData}
+              keyExtractor={(row) => String(selectedData.indexOf(row))}
+              emptyMessage="No data"
+            />
           )}
         </div>
       </div>

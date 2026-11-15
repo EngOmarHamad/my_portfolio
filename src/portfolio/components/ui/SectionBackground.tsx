@@ -2,8 +2,8 @@ import { useReducedMotion } from '@/portfolio/hooks/useReducedMotion'
 import { cn } from '@/shared/utils/cn'
 
 const variants = {
-  dots: 'bg-dot',
-  grid: 'bg-grid',
+  dots: 'bg-noise',
+  grid: 'bg-grid mask-fade-b',
 }
 
 interface SectionBackgroundProps {

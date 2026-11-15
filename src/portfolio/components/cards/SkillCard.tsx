@@ -16,7 +16,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 const colorVariants = [
   { border: 'card-border-teal', iconBg: 'bg-primary/10', iconHover: 'group-hover:bg-primary', iconColor: 'text-primary', iconHoverText: 'group-hover:text-white' },
   { border: 'card-border-coral', iconBg: 'bg-accent/10', iconHover: 'group-hover:bg-accent', iconColor: 'text-accent', iconHoverText: 'group-hover:text-white' },
-  { border: 'card-border-gold', iconBg: 'bg-highlight/10', iconHover: 'group-hover:bg-highlight', iconColor: 'text-highlight', iconHoverText: 'group-hover:text-[#1C1917]' },
+  { border: 'card-border-accent', iconBg: 'bg-highlight/10', iconHover: 'group-hover:bg-highlight', iconColor: 'text-highlight', iconHoverText: 'group-hover:text-[#1C1917]' },
   { border: 'card-border-teal', iconBg: 'bg-primary/10', iconHover: 'group-hover:bg-primary', iconColor: 'text-primary', iconHoverText: 'group-hover:text-white' },
 ]
 

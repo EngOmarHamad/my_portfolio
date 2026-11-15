@@ -1,100 +1,231 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Form, Input, Modal, Space, Tooltip, Typography } from 'antd'
+import { PlusOutlined, EditOutlined, ExportOutlined, TrophyOutlined } from '@ant-design/icons'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
 import { DataTable } from '@/admin/components/ui/DataTable'
 import { Pagination } from '@/admin/components/ui/Pagination'
 import { DeleteButton } from '@/admin/components/ui/DeleteButton'
-import { Input } from '@/admin/components/ui/FormField'
 import { ImageUpload } from '@/admin/components/ui/ImageUpload'
-import { toast } from 'sonner'
-import { Plus, Pencil, ExternalLink, Award } from 'lucide-react'
+import { toast } from '@/shared/lib/toast'
 import type { Certificate } from '@/admin/types'
 
 const certService = createBaseService<Certificate>('certificates')
+
+interface CertificateFormValues {
+  title: string
+  issuer: string
+  issue_date: string
+  credential_url: string
+}
 
 export function CertificatesPage() {
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<Certificate | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [form] = Form.useForm<CertificateFormValues>()
   const queryClient = useQueryClient()
   const pageSize = 10
 
-  const { data, isLoading } = useQuery({ queryKey: ['certificates', page], queryFn: () => certService.list({ page, pageSize }) })
+  const { data, isLoading } = useQuery({
+    queryKey: ['certificates', page],
+    queryFn: () => certService.list({ page, pageSize }),
+  })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => certService.remove(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['certificates'] }); toast.success('Certificate deleted') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certificates'] })
+      toast.success('Certificate deleted')
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to delete'),
   })
 
   const saveMutation = useMutation({
-    mutationFn: (values: Partial<Certificate>) => editing ? certService.update(editing.id, values) : certService.create(values),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['certificates'] }); toast.success(editing ? 'Certificate updated' : 'Certificate created'); setShowForm(false); setEditing(null) },
+    mutationFn: (values: Partial<Certificate>) => {
+      const payload: Partial<Certificate> = { ...values, issue_date: values.issue_date || null }
+      return editing ? certService.update(editing.id, payload) : certService.create(payload)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['certificates'] })
+      toast.success(editing ? 'Certificate updated' : 'Certificate created')
+      setShowForm(false)
+      setEditing(null)
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to save'),
   })
+
+  const openForm = (cert: Certificate | null) => {
+    setEditing(cert)
+    setShowForm(true)
+    form.setFieldsValue({
+      title: cert?.title ?? '',
+      issuer: cert?.issuer ?? '',
+      issue_date: cert?.issue_date ?? '',
+      credential_url: cert?.credential_url ?? '',
+    })
+  }
 
   if (isLoading) return <PageSkeleton />
 
   const columns = [
-    { key: 'title', header: 'Certificate', render: (c: Certificate) => (
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-[var(--color-surface-hover)] flex items-center justify-center"><Award className="w-4 h-4 text-amber-500" /></div>
-        <div><p className="font-medium text-[var(--color-text)]">{c.title}</p><p className="text-xs text-[var(--color-text-tertiary)]">{c.issuer}</p></div>
-      </div>
-    )},
-    { key: 'date', header: 'Issue Date', render: (c: Certificate) => <span className="text-sm text-[var(--color-text-secondary)]">{c.issue_date || '-'}</span> },
-    { key: 'link', header: '', render: (c: Certificate) => c.credential_url ? <a href={c.credential_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] inline-block"><ExternalLink className="w-4 h-4" /></a> : null },
-    { key: 'actions', header: '', render: (c: Certificate) => (
-      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => { setEditing(c); setShowForm(true) }} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)]"><Pencil className="w-4 h-4" /></button>
-        <DeleteButton onDelete={() => deleteMutation.mutateAsync(c.id)} />
-      </div>
-    )},
+    {
+      key: 'title',
+      header: 'Certificate',
+      render: (c: Certificate) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: 'var(--color-surface-hover)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <TrophyOutlined style={{ color: '#D69E36' }} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <Typography.Text strong ellipsis style={{ display: 'block', maxWidth: 300 }}>
+              {c.title}
+            </Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {c.issuer}
+            </Typography.Text>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'date',
+      header: 'Issue Date',
+      width: 150,
+      render: (c: Certificate) => (
+        <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+          {c.issue_date || '-'}
+        </Typography.Text>
+      ),
+    },
+    {
+      key: 'link',
+      header: '',
+      width: 60,
+      render: (c: Certificate) =>
+        c.credential_url ? (
+          <Tooltip title="View credential">
+            <Button
+              type="text"
+              size="small"
+              icon={<ExportOutlined />}
+              href={c.credential_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          </Tooltip>
+        ) : null,
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: 90,
+      render: (c: Certificate) => (
+        <Space size={0} onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Edit">
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => openForm(c)} />
+          </Tooltip>
+          <DeleteButton onDelete={() => deleteMutation.mutateAsync(c.id)} />
+        </Space>
+      ),
+    },
   ]
 
   return (
     <div>
-      <PageHeader title="Certificates" description="Manage your certificates" actions={
-        <button onClick={() => { setEditing(null); setShowForm(true) }} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)]"><Plus className="w-4 h-4" />Add Certificate</button>
-      } />
+      <PageHeader
+        title="Certificates"
+        description="Manage your certificates"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Certificates' }]}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openForm(null)}>
+            Add Certificate
+          </Button>
+        }
+      />
+
       <DataTable columns={columns} data={data?.data ?? []} keyExtractor={(c) => c.id} />
       {data && <Pagination page={page} pageSize={pageSize} total={data.count} onPageChange={setPage} />}
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto py-10">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowForm(false); setEditing(null) }} />
-          <div className="relative bg-[var(--color-surface)] rounded-2xl shadow-dialog border border-[var(--color-border)] p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold mb-6">{editing ? 'Edit Certificate' : 'Add Certificate'}</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              const form = new FormData(e.currentTarget)
-              saveMutation.mutate({
-                title: form.get('title') as string,
-                issuer: form.get('issuer') as string,
-                issue_date: form.get('issue_date') as string || null,
-                credential_url: form.get('credential_url') as string,
-              })
-            }} className="space-y-4">
-              <Input label="Title" name="title" defaultValue={editing?.title} required />
-              <Input label="Issuer" name="issuer" defaultValue={editing?.issuer} required />
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Issue Date" name="issue_date" type="date" defaultValue={editing?.issue_date || ''} />
-                <Input label="Credential URL" name="credential_url" defaultValue={editing?.credential_url} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Certificate Image</label>
-                <ImageUpload value={editing?.certificate_image_url} onChange={(url) => saveMutation.mutate({ certificate_image_url: url })} bucket="certificates" aspectRatio="4/3" />
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
-                <button type="button" onClick={() => { setShowForm(false); setEditing(null) }} className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--color-border)]">Cancel</button>
-                <button type="submit" disabled={saveMutation.isPending} className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white disabled:opacity-50">{saveMutation.isPending ? 'Saving...' : 'Save'}</button>
-              </div>
-            </form>
+      <Modal
+        open={showForm}
+        onCancel={() => {
+          setShowForm(false)
+          setEditing(null)
+        }}
+        footer={null}
+        title={editing ? 'Edit Certificate' : 'Add Certificate'}
+        width={560}
+        destroyOnHidden forceRender
+      >
+        <Form<CertificateFormValues>
+          form={form}
+          layout="vertical"
+          onFinish={(values) => saveMutation.mutate(values)}
+          style={{ marginTop: 16 }}
+        >
+          <Form.Item
+            name="title"
+            label="Title"
+            rules={[{ required: true, message: 'Title is required' }]}
+          >
+            <Input placeholder="Certificate title" />
+          </Form.Item>
+
+          <Form.Item
+            name="issuer"
+            label="Issuer"
+            rules={[{ required: true, message: 'Issuer is required' }]}
+          >
+            <Input placeholder="Issuing organization" />
+          </Form.Item>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <Form.Item name="issue_date" label="Issue Date">
+              <Input type="date" />
+            </Form.Item>
+            <Form.Item name="credential_url" label="Credential URL">
+              <Input placeholder="https://..." />
+            </Form.Item>
           </div>
-        </div>
-      )}
+
+          <Form.Item label="Certificate Image">
+            <ImageUpload
+              value={editing?.certificate_image_url}
+              onChange={(url) => saveMutation.mutate({ certificate_image_url: url })}
+              bucket="certificates"
+              aspectRatio="4/3"
+            />
+          </Form.Item>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
+            <Button
+              onClick={() => {
+                setShowForm(false)
+                setEditing(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>
+              Save
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   )
 }

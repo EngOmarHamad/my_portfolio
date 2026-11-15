@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, DatePicker, Form, Input, Modal, Space, Tooltip, Typography } from 'antd'
+import { PlusOutlined, EditOutlined, TrophyOutlined } from '@ant-design/icons'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
@@ -7,90 +11,185 @@ import { DataTable } from '@/admin/components/ui/DataTable'
 import { Pagination } from '@/admin/components/ui/Pagination'
 import { StatusBadge } from '@/admin/components/ui/StatusBadge'
 import { DeleteButton } from '@/admin/components/ui/DeleteButton'
-import { Input, Textarea } from '@/admin/components/ui/FormField'
-import { toast } from 'sonner'
-import { Plus, Pencil, Trophy } from 'lucide-react'
+import { toast } from '@/shared/lib/toast'
 import type { Achievement } from '@/admin/types'
 
 const achievementService = createBaseService<Achievement>('achievements')
+
+interface AchievementFormValues {
+  title: string
+  description: string
+  icon: string
+  date: Dayjs | null
+}
 
 export function AchievementsPage() {
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<Achievement | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [form] = Form.useForm<AchievementFormValues>()
   const queryClient = useQueryClient()
   const pageSize = 10
 
-  const { data, isLoading } = useQuery({ queryKey: ['achievements', page], queryFn: () => achievementService.list({ page, pageSize }) })
+  const { data, isLoading } = useQuery({
+    queryKey: ['achievements', page],
+    queryFn: () => achievementService.list({ page, pageSize }),
+  })
+
+  const openForm = (achievement: Achievement | null) => {
+    setEditing(achievement)
+    setShowForm(true)
+    form.setFieldsValue({
+      title: achievement?.title ?? '',
+      description: achievement?.description ?? '',
+      icon: achievement?.icon ?? '',
+      date: achievement?.date ? dayjs(achievement.date) : null,
+    })
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditing(null)
+  }
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => achievementService.remove(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['achievements'] }); toast.success('Achievement deleted') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['achievements'] })
+      toast.success('Achievement deleted')
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to delete'),
   })
 
   const saveMutation = useMutation({
-    mutationFn: (values: Partial<Achievement>) => editing ? achievementService.update(editing.id, values) : achievementService.create(values),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['achievements'] }); toast.success(editing ? 'Achievement updated' : 'Achievement created'); setShowForm(false); setEditing(null) },
+    mutationFn: (values: AchievementFormValues) => {
+      const payload: Partial<Achievement> = {
+        title: values.title,
+        description: values.description,
+        icon: values.icon,
+        date: values.date ? values.date.format('YYYY-MM-DD') : null,
+        is_published: true,
+      }
+      return editing ? achievementService.update(editing.id, payload) : achievementService.create(payload)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['achievements'] })
+      toast.success(editing ? 'Achievement updated' : 'Achievement created')
+      setShowForm(false)
+      setEditing(null)
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to save'),
   })
 
   if (isLoading) return <PageSkeleton />
 
   const columns = [
-    { key: 'title', header: 'Achievement', render: (a: Achievement) => (
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center"><Trophy className="w-4 h-4 text-amber-500" /></div>
-        <div><p className="font-medium text-[var(--color-text)]">{a.title}</p><p className="text-xs text-[var(--color-text-tertiary)]">{a.description?.slice(0, 60)}</p></div>
-      </div>
-    )},
-    { key: 'is_published', header: 'Status', render: (a: Achievement) => <StatusBadge status={a.is_published ? 'published' : 'draft'} /> },
-    { key: 'actions', header: '', render: (a: Achievement) => (
-      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => { setEditing(a); setShowForm(true) }} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)]"><Pencil className="w-4 h-4" /></button>
-        <DeleteButton onDelete={() => deleteMutation.mutateAsync(a.id)} />
-      </div>
-    )},
+    {
+      key: 'title',
+      header: 'Achievement',
+      render: (a: Achievement) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: 'rgba(245, 158, 11, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <TrophyOutlined style={{ color: '#f59e0b' }} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <Typography.Text strong ellipsis style={{ display: 'block', maxWidth: 320 }}>
+              {a.title}
+            </Typography.Text>
+            <Typography.Text type="secondary" ellipsis style={{ display: 'block', maxWidth: 320, fontSize: 12 }}>
+              {a.description?.slice(0, 60)}
+            </Typography.Text>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'is_published',
+      header: 'Status',
+      width: 110,
+      render: (a: Achievement) => <StatusBadge status={a.is_published ? 'published' : 'draft'} />,
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: 100,
+      render: (a: Achievement) => (
+        <Space size={0} onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Edit">
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => openForm(a)} />
+          </Tooltip>
+          <DeleteButton onDelete={() => deleteMutation.mutateAsync(a.id)} />
+        </Space>
+      ),
+    },
   ]
 
   return (
     <div>
-      <PageHeader title="Achievements" description="Manage your achievements" actions={
-        <button onClick={() => { setEditing(null); setShowForm(true) }} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white"><Plus className="w-4 h-4" />Add Achievement</button>
-      } />
+      <PageHeader
+        title="Achievements"
+        description="Manage your achievements"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Achievements' }]}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openForm(null)}>
+            Add Achievement
+          </Button>
+        }
+      />
+
       <DataTable columns={columns} data={data?.data ?? []} keyExtractor={(a) => a.id} />
+
       {data && <Pagination page={page} pageSize={pageSize} total={data.count} onPageChange={setPage} />}
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowForm(false); setEditing(null) }} />
-          <div className="relative bg-[var(--color-surface)] rounded-2xl shadow-dialog border border-[var(--color-border)] p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold mb-6">{editing ? 'Edit Achievement' : 'Add Achievement'}</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              const form = new FormData(e.currentTarget)
-              saveMutation.mutate({
-                title: form.get('title') as string,
-                description: form.get('description') as string,
-                icon: form.get('icon') as string,
-                date: form.get('date') as string || null,
-                is_published: true,
-              })
-            }} className="space-y-4">
-              <Input label="Title" name="title" defaultValue={editing?.title} required />
-              <Textarea label="Description" name="description" defaultValue={editing?.description} rows={3} />
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Icon (emoji)" name="icon" defaultValue={editing?.icon} />
-                <Input label="Date" name="date" type="date" defaultValue={editing?.date || ''} />
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
-                <button type="button" onClick={() => { setShowForm(false); setEditing(null) }} className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--color-border)]">Cancel</button>
-                <button type="submit" disabled={saveMutation.isPending} className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white disabled:opacity-50">{saveMutation.isPending ? 'Saving...' : 'Save'}</button>
-              </div>
-            </form>
+      <Modal
+        open={showForm}
+        onCancel={closeForm}
+        footer={null}
+        title={editing ? 'Edit Achievement' : 'Add Achievement'}
+        width={560}
+        destroyOnHidden forceRender
+      >
+        <Form<AchievementFormValues>
+          form={form}
+          layout="vertical"
+          onFinish={(values) => saveMutation.mutate(values)}
+          style={{ marginTop: 16 }}
+        >
+          <Form.Item name="title" label="Title" rules={[{ required: true, message: 'Title is required' }]}>
+            <Input placeholder="Award name" />
+          </Form.Item>
+
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={3} placeholder="What did you achieve?" />
+          </Form.Item>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <Form.Item name="icon" label="Icon (emoji)">
+              <Input placeholder="🏆" />
+            </Form.Item>
+            <Form.Item name="date" label="Date">
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
           </div>
-        </div>
-      )}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
+            <Button onClick={closeForm}>Cancel</Button>
+            <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>
+              {editing ? 'Save Changes' : 'Save'}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   )
 }

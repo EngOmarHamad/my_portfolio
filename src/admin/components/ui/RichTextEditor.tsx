@@ -1,5 +1,15 @@
-import { useState, useRef, useCallback } from 'react'
-import { Bold, Italic, List, ListOrdered, Heading, Quote, Code } from 'lucide-react'
+import { useRef, useCallback } from 'react'
+import { Button, Tooltip } from 'antd'
+import {
+  BoldOutlined,
+  ItalicOutlined,
+  UnorderedListOutlined,
+  OrderedListOutlined,
+  FontSizeOutlined,
+  MessageOutlined,
+  CodeOutlined,
+} from '@ant-design/icons'
+import { theme } from 'antd'
 
 interface RichTextEditorProps {
   value: string
@@ -8,8 +18,9 @@ interface RichTextEditorProps {
   minHeight?: string
 }
 
-export function RichTextEditor({ value, onChange, placeholder = 'Write your content...', minHeight = '300px' }: RichTextEditorProps) {
+export function RichTextEditor({ value, onChange, placeholder = 'Write your content...', minHeight = '240px' }: RichTextEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { token } = theme.useToken()
 
   const insertMarkdown = useCallback((before: string, after: string = '') => {
     const textarea = textareaRef.current
@@ -28,39 +39,53 @@ export function RichTextEditor({ value, onChange, placeholder = 'Write your cont
   }, [value, onChange])
 
   const toolbar = [
-    { icon: Bold, action: () => insertMarkdown('**', '**'), label: 'Bold' },
-    { icon: Italic, action: () => insertMarkdown('*', '*'), label: 'Italic' },
-    { icon: Heading, action: () => insertMarkdown('## ', ''), label: 'Heading' },
-    { icon: List, action: () => insertMarkdown('- ', ''), label: 'Bullet List' },
-    { icon: ListOrdered, action: () => insertMarkdown('1. ', ''), label: 'Ordered List' },
-    { icon: Quote, action: () => insertMarkdown('> ', ''), label: 'Quote' },
-    { icon: Code, action: () => insertMarkdown('```\n', '\n```'), label: 'Code' },
+    { icon: <BoldOutlined />, action: () => insertMarkdown('**', '**'), label: 'Bold' },
+    { icon: <ItalicOutlined />, action: () => insertMarkdown('*', '*'), label: 'Italic' },
+    { icon: <FontSizeOutlined />, action: () => insertMarkdown('## ', ''), label: 'Heading' },
+    { icon: <UnorderedListOutlined />, action: () => insertMarkdown('- ', ''), label: 'Bullet list' },
+    { icon: <OrderedListOutlined />, action: () => insertMarkdown('1. ', ''), label: 'Numbered list' },
+    { icon: <MessageOutlined />, action: () => insertMarkdown('> ', ''), label: 'Quote' },
+    { icon: <CodeOutlined />, action: () => insertMarkdown('```\n', '\n```'), label: 'Code block' },
   ]
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-      <div className="flex items-center gap-1 px-2 py-1.5 border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]">
+    <div style={{ border: `1px solid ${token.colorBorder}`, borderRadius: token.borderRadius, overflow: 'hidden' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          padding: '4px 8px',
+          background: token.colorFillQuaternary,
+          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+        }}
+      >
         {toolbar.map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            onClick={item.action}
-            title={item.label}
-            className="p-1.5 rounded-lg hover:bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
-          >
-            <item.icon className="w-4 h-4" />
-          </button>
+          <Tooltip key={item.label} title={item.label}>
+            <Button type="text" size="small" icon={item.icon} onClick={item.action} />
+          </Tooltip>
         ))}
-        <div className="flex-1" />
-        <span className="text-[10px] text-[var(--color-text-tertiary)]">Markdown supported</span>
+        <div style={{ flex: 1 }} />
+        <span style={{ fontSize: 11, color: token.colorTextTertiary, paddingInlineEnd: 4 }}>Markdown supported</span>
       </div>
       <textarea
         ref={textareaRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 text-sm bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-tertiary)] focus:outline-none resize-y font-mono"
-        style={{ minHeight }}
+        style={{
+          width: '100%',
+          minHeight,
+          padding: '10px 12px',
+          fontSize: 14,
+          fontFamily: 'var(--font-mono)',
+          lineHeight: 1.6,
+          background: token.colorBgContainer,
+          color: token.colorText,
+          border: 'none',
+          outline: 'none',
+          resize: 'vertical',
+        }}
       />
     </div>
   )

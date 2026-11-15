@@ -1,25 +1,47 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Loader2, LogIn } from 'lucide-react'
+import { Alert, Button, Card, Divider, Form, Input, Typography } from 'antd'
+import { LockOutlined, MailOutlined, LoginOutlined, CopyOutlined, CheckOutlined } from '@ant-design/icons'
 import { authService } from '@/admin/services/auth-service'
 import { useAuthStore } from '@/admin/stores/auth-store'
+import { toast } from '@/shared/lib/toast'
+
+const DEMO_EMAIL = 'omar.mohammad.hamad2003@gmail.com'
+const DEMO_PASSWORD = 'Omar@2003'
+
+interface LoginValues {
+  email: string
+  password: string
+}
 
 export function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [copiedField, setCopiedField] = useState<'email' | 'password' | null>(null)
+  const [form] = Form.useForm<LoginValues>()
   const navigate = useNavigate()
   const { setUser } = useAuthStore()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const fillDemoAccount = () => {
+    form.setFieldsValue({ email: DEMO_EMAIL, password: DEMO_PASSWORD })
+  }
+
+  const copyToClipboard = async (value: string, field: 'email' | 'password') => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedField(field)
+      toast.success('Copied to clipboard')
+      setTimeout(() => setCopiedField(null), 1500)
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
+
+  const handleSubmit = async (values: LoginValues) => {
     setError('')
     setIsLoading(true)
-
     try {
-      const user = await authService.login(email, password)
+      const user = await authService.login(values.email, values.password)
       setUser(user)
       navigate('/admin', { replace: true })
     } catch (err) {
@@ -30,74 +52,129 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[var(--color-primary)]/10 mb-4">
-            <LogIn className="w-6 h-6 text-[var(--color-primary)]" />
+    <div
+      style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+        background: 'var(--color-bg)',
+      }}
+    >
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 48,
+              height: 48,
+              borderRadius: 10,
+              background: 'var(--color-primary)',
+              color: '#fff',
+              marginBottom: 16,
+            }}
+          >
+            <LockOutlined style={{ fontSize: 22 }} />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">Admin Login</h1>
-          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">Sign in to manage your portfolio</p>
+          <Typography.Title level={3} style={{ marginBottom: 4 }}>
+            Admin Login
+          </Typography.Title>
+          <Typography.Text type="secondary">Sign in to manage your portfolio</Typography.Text>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[var(--color-text)]">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@example.com"
-              required
-              autoFocus
-              className="w-full px-3 py-2.5 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] transition-all"
-            />
-          </div>
+        <Card styles={{ body: { padding: 24 } }}>
+          <Form<LoginValues> form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                { required: true, message: 'Email is required' },
+                { type: 'email', message: 'Enter a valid email' },
+              ]}
+            >
+              <Input prefix={<MailOutlined />} placeholder="admin@example.com" autoFocus size="large" />
+            </Form.Item>
 
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-[var(--color-text)]">Password</label>
-              <Link to="/admin/reset-password" className="text-xs text-[var(--color-primary)] hover:text-[var(--color-primary-light)] transition-colors">
-                Forgot password?
-              </Link>
-            </div>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-                className="w-full px-3 py-2.5 pr-10 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] hover:text-[var(--color-text)]"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
+            <Form.Item
+              name="password"
+              label={
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                  <span>Password</span>
+                  <Link to="/admin/reset-password" style={{ fontWeight: 400 }}>
+                    Forgot password?
+                  </Link>
+                </div>
+              }
+              rules={[{ required: true, message: 'Password is required' }]}
+            >
+              <Input.Password prefix={<LockOutlined />} placeholder="Enter your password" size="large" />
+            </Form.Item>
 
-          {error && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
-              <p className="text-xs text-red-500">{error}</p>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-2.5 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              'Sign in'
+            {error && (
+              <Alert type="error" message={error} showIcon style={{ marginBottom: 16 }} />
             )}
-          </button>
-        </form>
+
+            <Button type="primary" htmlType="submit" block size="large" loading={isLoading} icon={<LoginOutlined />}>
+              Sign in
+            </Button>
+          </Form>
+        </Card>
+
+        {import.meta.env.DEV && (
+          <Card
+            size="small"
+            style={{ marginTop: 16 }}
+            title={
+              <span>
+                Demo Account <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>(dev only)</span>
+              </span>
+            }
+          >
+            {(
+              [
+                { label: 'Email', value: DEMO_EMAIL, field: 'email' as const },
+                { label: 'Password', value: DEMO_PASSWORD, field: 'password' as const },
+              ]
+            ).map(({ label, value, field }) => (
+              <div
+                key={field}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  padding: '6px 10px',
+                  borderRadius: 6,
+                  border: '1px solid var(--color-border)',
+                  marginBottom: 8,
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
+                    {label}
+                  </Typography.Text>
+                  <Typography.Text style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }} ellipsis>
+                    {value}
+                  </Typography.Text>
+                </div>
+                <Button
+                  size="small"
+                  type="text"
+                  icon={copiedField === field ? <CheckOutlined style={{ color: 'var(--color-secondary)' }} /> : <CopyOutlined />}
+                  onClick={() => copyToClipboard(value, field)}
+                  aria-label={`Copy ${label.toLowerCase()}`}
+                />
+              </div>
+            ))}
+            <Divider style={{ margin: '12px 0' }} />
+            <Button block type="primary" ghost onClick={fillDemoAccount}>
+              Use demo account
+            </Button>
+          </Card>
+        )}
       </div>
     </div>
   )

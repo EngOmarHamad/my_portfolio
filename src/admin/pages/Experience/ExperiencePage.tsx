@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Checkbox, Form, Input, Modal, Space, Tooltip, Typography } from 'antd'
+import { PlusOutlined, EditOutlined, BankOutlined } from '@ant-design/icons'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
@@ -7,17 +9,25 @@ import { DataTable } from '@/admin/components/ui/DataTable'
 import { Pagination } from '@/admin/components/ui/Pagination'
 import { StatusBadge } from '@/admin/components/ui/StatusBadge'
 import { DeleteButton } from '@/admin/components/ui/DeleteButton'
-import { Input, Textarea, Toggle } from '@/admin/components/ui/FormField'
-import { toast } from 'sonner'
-import { Plus, Pencil, Building2 } from 'lucide-react'
+import { toast } from '@/shared/lib/toast'
 import type { Experience } from '@/admin/types'
 
 const experienceService = createBaseService<Experience>('experience')
+
+interface ExperienceFormValues {
+  company: string
+  position: string
+  description: string
+  start_date: string
+  end_date: string
+  is_current: boolean
+}
 
 export function ExperiencePage() {
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<Experience | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [form] = Form.useForm<ExperienceFormValues>()
   const queryClient = useQueryClient()
   const pageSize = 10
 
@@ -36,15 +46,31 @@ export function ExperiencePage() {
   })
 
   const saveMutation = useMutation({
-    mutationFn: (values: Partial<Experience>) =>
-      editing ? experienceService.update(editing.id, values) : experienceService.create(values),
+    mutationFn: (values: ExperienceFormValues) => {
+      const payload: Partial<Experience> = { ...values, end_date: values.end_date || null }
+      return editing ? experienceService.update(editing.id, payload) : experienceService.create(payload)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['experience'] })
       toast.success(editing ? 'Experience updated' : 'Experience created')
-      setShowForm(false); setEditing(null)
+      setShowForm(false)
+      setEditing(null)
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to save'),
   })
+
+  const openForm = (exp: Experience | null) => {
+    setEditing(exp)
+    setShowForm(true)
+    form.setFieldsValue({
+      company: exp?.company ?? '',
+      position: exp?.position ?? '',
+      description: exp?.description ?? '',
+      start_date: exp?.start_date ?? '',
+      end_date: exp?.end_date ?? '',
+      is_current: exp?.is_current ?? false,
+    })
+  }
 
   if (isLoading) return <PageSkeleton />
 
@@ -53,13 +79,36 @@ export function ExperiencePage() {
       key: 'company',
       header: 'Company',
       render: (exp: Experience) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-surface-hover)] flex items-center justify-center">
-            {exp.logo_url ? <img src={exp.logo_url} alt="" className="w-6 h-6 rounded" /> : <Building2 className="w-4 h-4 text-[var(--color-text-tertiary)]" />}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: 'var(--color-surface-hover)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            {exp.logo_url ? (
+              <img
+                src={exp.logo_url}
+                alt=""
+                style={{ width: 24, height: 24, borderRadius: 4, objectFit: 'cover' }}
+              />
+            ) : (
+              <BankOutlined style={{ color: 'var(--color-text-tertiary)' }} />
+            )}
           </div>
-          <div>
-            <p className="font-medium text-[var(--color-text)]">{exp.company}</p>
-            <p className="text-xs text-[var(--color-text-tertiary)]">{exp.position}</p>
+          <div style={{ minWidth: 0 }}>
+            <Typography.Text strong ellipsis style={{ display: 'block', maxWidth: 260 }}>
+              {exp.company}
+            </Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {exp.position}
+            </Typography.Text>
           </div>
         </div>
       ),
@@ -67,76 +116,120 @@ export function ExperiencePage() {
     {
       key: 'period',
       header: 'Period',
+      width: 220,
       render: (exp: Experience) => (
-        <span className="text-sm text-[var(--color-text-secondary)]">
+        <Typography.Text type="secondary" style={{ fontSize: 13 }}>
           {exp.start_date} - {exp.is_current ? 'Present' : exp.end_date}
-        </span>
+        </Typography.Text>
       ),
     },
     {
       key: 'is_current',
       header: 'Current',
-      render: (exp: Experience) => exp.is_current ? <StatusBadge status="active" /> : null,
+      width: 100,
+      render: (exp: Experience) => (exp.is_current ? <StatusBadge status="active" /> : null),
     },
     {
       key: 'actions',
       header: '',
+      width: 90,
       render: (exp: Experience) => (
-        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => { setEditing(exp); setShowForm(true) }} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)]"><Pencil className="w-4 h-4" /></button>
+        <Space size={0} onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Edit">
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => openForm(exp)} />
+          </Tooltip>
           <DeleteButton onDelete={() => deleteMutation.mutateAsync(exp.id)} />
-        </div>
+        </Space>
       ),
     },
   ]
 
   return (
     <div>
-      <PageHeader title="Experience" description="Manage your work experience" actions={
-        <button onClick={() => { setEditing(null); setShowForm(true) }} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)] transition-colors"><Plus className="w-4 h-4" />Add Experience</button>
-      } />
+      <PageHeader
+        title="Experience"
+        description="Manage your work experience"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Experience' }]}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openForm(null)}>
+            Add Experience
+          </Button>
+        }
+      />
 
       <DataTable columns={columns} data={data?.data ?? []} keyExtractor={(e) => e.id} />
       {data && <Pagination page={page} pageSize={pageSize} total={data.count} onPageChange={setPage} />}
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowForm(false); setEditing(null) }} />
-          <div className="relative bg-[var(--color-surface)] rounded-2xl shadow-dialog border border-[var(--color-border)] p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold text-[var(--color-text)] mb-6">{editing ? 'Edit Experience' : 'Add Experience'}</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              const form = new FormData(e.currentTarget)
-              saveMutation.mutate({
-                company: form.get('company') as string,
-                position: form.get('position') as string,
-                description: form.get('description') as string,
-                start_date: form.get('start_date') as string,
-                end_date: form.get('end_date') as string || null,
-                is_current: form.get('is_current') === 'on',
-              })
-            }} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Company" name="company" defaultValue={editing?.company} required />
-                <Input label="Position" name="position" defaultValue={editing?.position} required />
-              </div>
-              <Textarea label="Description" name="description" defaultValue={editing?.description} rows={4} />
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Start Date" name="start_date" type="date" defaultValue={editing?.start_date} required />
-                <Input label="End Date" name="end_date" type="date" defaultValue={editing?.end_date || ''} />
-              </div>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="is_current" defaultChecked={editing?.is_current} className="rounded" />
-                <span className="text-sm text-[var(--color-text)]">Current job</span>
-              </label>
-              <div className="flex justify-end gap-2 pt-4">
-                <button type="button" onClick={() => { setShowForm(false); setEditing(null) }} className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]">Cancel</button>
-                <button type="submit" disabled={saveMutation.isPending} className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)] disabled:opacity-50">{saveMutation.isPending ? 'Saving...' : 'Save'}</button>
-              </div>
-            </form>
+      <Modal
+        open={showForm}
+        onCancel={() => {
+          setShowForm(false)
+          setEditing(null)
+        }}
+        footer={null}
+        title={editing ? 'Edit Experience' : 'Add Experience'}
+        width={560}
+        destroyOnHidden forceRender
+      >
+        <Form<ExperienceFormValues>
+          form={form}
+          layout="vertical"
+          onFinish={(values) => saveMutation.mutate(values)}
+          style={{ marginTop: 16 }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <Form.Item
+              name="company"
+              label="Company"
+              rules={[{ required: true, message: 'Company is required' }]}
+            >
+              <Input placeholder="Company name" />
+            </Form.Item>
+            <Form.Item
+              name="position"
+              label="Position"
+              rules={[{ required: true, message: 'Position is required' }]}
+            >
+              <Input placeholder="Job title" />
+            </Form.Item>
           </div>
-        </div>
-      )}
+
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={4} placeholder="What did you do?" />
+          </Form.Item>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <Form.Item
+              name="start_date"
+              label="Start Date"
+              rules={[{ required: true, message: 'Start date is required' }]}
+            >
+              <Input type="date" />
+            </Form.Item>
+            <Form.Item name="end_date" label="End Date">
+              <Input type="date" />
+            </Form.Item>
+          </div>
+
+          <Form.Item name="is_current" valuePropName="checked" style={{ marginBottom: 0 }}>
+            <Checkbox>Current job</Checkbox>
+          </Form.Item>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
+            <Button
+              onClick={() => {
+                setShowForm(false)
+                setEditing(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>
+              Save
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   )
 }

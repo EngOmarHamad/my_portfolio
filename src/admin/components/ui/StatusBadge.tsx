@@ -1,31 +1,34 @@
-import { cn } from '@/utils/cn'
+import { Tag } from 'antd'
 
 interface StatusBadgeProps {
   status: string
 }
 
-const statusStyles: Record<string, string> = {
-  published: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-  draft: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-  archived: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-  active: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-  inactive: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-  online: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-  maintenance: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-  offline: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-  read: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  unread: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
+/**
+ * Consistent status indicator using Ant Design Tag.
+ * Colors are semantic: green = live/positive, amber = pending/warning,
+ * blue = informational, red = negative, neutral = inactive/archived.
+ */
+const STATUS_CONFIG: Record<string, { color: string; label?: string }> = {
+  published: { color: 'success' },
+  draft: { color: 'warning' },
+  archived: { color: 'default' },
+  active: { color: 'success' },
+  inactive: { color: 'default' },
+  online: { color: 'success' },
+  maintenance: { color: 'warning' },
+  offline: { color: 'default' },
+  pending: { color: 'warning' },
+  approved: { color: 'success' },
+  rejected: { color: 'error' },
+  read: { color: 'default' },
+  unread: { color: 'processing' },
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const style = statusStyles[status.toLowerCase()] || 'bg-gray-500/10 text-gray-500 border-gray-500/20'
+  const key = status.toLowerCase()
+  const config = STATUS_CONFIG[key] ?? { color: 'default' }
+  const label = key.charAt(0).toUpperCase() + key.slice(1)
 
-  return (
-    <span className={cn(
-      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
-      style
-    )}>
-      {status}
-    </span>
-  )
+  return <Tag color={config.color}>{config.label ?? label}</Tag>
 }

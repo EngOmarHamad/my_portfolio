@@ -1,73 +1,111 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useSyncExternalStore } from "react";
 
-type Theme = 'light' | 'dark'
+type Theme = "light" | "dark";
 
 function getSystemTheme(): Theme {
-  if (typeof window === 'undefined') return 'light'
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  if (typeof window === "undefined") return "dark"; // افتراضي دارك
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 function getStoredTheme(): Theme | null {
   try {
-    const stored = localStorage.getItem('theme')
-    if (stored === 'light' || stored === 'dark') return stored
+    const stored = localStorage.getItem("theme");
+    if (stored === "light" || stored === "dark") return stored;
   } catch {}
-  return null
+  return null;
 }
 
 function getTheme(): Theme {
-  return getStoredTheme() ?? getSystemTheme()
+  return getStoredTheme() ?? getSystemTheme();
 }
 
-let currentTheme = getTheme()
-const listeners = new Set<() => void>()
+let currentTheme = getTheme();
+const listeners = new Set<() => void>();
+
+function applyTheme(theme: Theme) {
+  const html = document.documentElement;
+
+  // إزالة جميع الكلاسات
+  html.classList.remove("light", "dark");
+
+  // إضافة الكلاس المناسب
+  if (theme === "dark") {
+    html.classList.add("dark");
+    html.classList.remove("light");
+  } else {
+    html.classList.add("light");
+    html.classList.remove("dark");
+  }
+}
 
 function setTheme(theme: Theme) {
-  currentTheme = theme
+  currentTheme = theme;
   try {
-    localStorage.setItem('theme', theme)
+    localStorage.setItem("theme", theme);
   } catch {}
-  if (theme === 'dark') {
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.remove('dark')
-  }
-  listeners.forEach((l) => l())
+  applyTheme(theme);
+  listeners.forEach((l) => l());
 }
 
 function subscribe(callback: () => void) {
-  listeners.add(callback)
-  return () => listeners.delete(callback)
+  listeners.add(callback);
+  return () => listeners.delete(callback);
 }
 
 function getSnapshot() {
-  return currentTheme
+  return currentTheme;
 }
 
 export function useTheme() {
-  const theme = useSyncExternalStore(subscribe, getSnapshot)
+  const theme = useSyncExternalStore(subscribe, getSnapshot);
 
   const toggleTheme = useCallback(() => {
-    setTheme(theme === 'light' ? 'dark' : 'light')
-  }, [theme])
+    setTheme(theme === "light" ? "dark" : "light");
+  }, [theme]);
 
   const setThemeValue = useCallback((t: Theme) => {
-    setTheme(t)
-  }, [])
+    setTheme(t);
+  }, []);
 
-  return { theme, toggleTheme, setTheme: setThemeValue, isDark: theme === 'dark' }
+  return {
+    theme,
+    toggleTheme,
+    setTheme: setThemeValue,
+    isDark: theme === "dark",
+  };
 }
 
-if (typeof window !== 'undefined') {
-  const stored = getStoredTheme()
+// ============================================
+// INITIALIZATION - يتم تشغيلها مرة واحدة
+// ============================================
+if (typeof window !== "undefined") {
+  // 1. التحقق من التخزين المحلي
+  const stored = getStoredTheme();
+
   if (stored) {
-    setTheme(stored)
+    // 2. إذا كان هناك ثيم مخزن، استخدمه
+    setTheme(stored);
   } else {
-    setTheme(getSystemTheme())
+    // 3. وإلا استخدم تفضيل النظام
+    setTheme(getSystemTheme());
   }
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+
+  // 4. الاستماع لتغيرات تفضيل النظام
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+  const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+    // فقط غير إذا لم يكن هناك ثيم مخزن
     if (!getStoredTheme()) {
-      setTheme(e.matches ? 'dark' : 'light')
+      setTheme(e.matches ? "dark" : "light");
     }
-  })
+  };
+
+  mediaQuery.addEventListener("change", handleSystemThemeChange);
+
+  // 5. التنظيف عند إغلاق الصفحة
+  window.addEventListener("beforeunload", () => {
+    mediaQuery.removeEventListener("change", handleSystemThemeChange);
+  });
 }

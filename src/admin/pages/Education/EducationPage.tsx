@@ -1,22 +1,33 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Form, Input, InputNumber, Modal, Space, Tooltip, Typography } from 'antd'
+import { PlusOutlined, EditOutlined, ReadOutlined } from '@ant-design/icons'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
 import { DataTable } from '@/admin/components/ui/DataTable'
 import { Pagination } from '@/admin/components/ui/Pagination'
 import { DeleteButton } from '@/admin/components/ui/DeleteButton'
-import { Input, Textarea } from '@/admin/components/ui/FormField'
-import { toast } from 'sonner'
-import { Plus, Pencil, GraduationCap } from 'lucide-react'
+import { toast } from '@/shared/lib/toast'
 import type { Education } from '@/admin/types'
 
 const educationService = createBaseService<Education>('education')
+
+interface EducationFormValues {
+  university: string
+  degree: string
+  department: string
+  description: string
+  gpa: number | null
+  start_date: string
+  end_date: string
+}
 
 export function EducationPage() {
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<Education | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [form] = Form.useForm<EducationFormValues>()
   const queryClient = useQueryClient()
   const pageSize = 10
 
@@ -27,20 +38,44 @@ export function EducationPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => educationService.remove(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['education'] }); toast.success('Education deleted') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['education'] })
+      toast.success('Education deleted')
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to delete'),
   })
 
   const saveMutation = useMutation({
-    mutationFn: (values: Partial<Education>) =>
-      editing ? educationService.update(editing.id, values) : educationService.create(values),
+    mutationFn: (values: EducationFormValues) => {
+      const payload: Partial<Education> = {
+        ...values,
+        gpa: values.gpa ?? null,
+        end_date: values.end_date || null,
+      }
+      return editing ? educationService.update(editing.id, payload) : educationService.create(payload)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['education'] })
       toast.success(editing ? 'Education updated' : 'Education created')
-      setShowForm(false); setEditing(null)
+      setShowForm(false)
+      setEditing(null)
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to save'),
   })
+
+  const openForm = (edu: Education | null) => {
+    setEditing(edu)
+    setShowForm(true)
+    form.setFieldsValue({
+      university: edu?.university ?? '',
+      degree: edu?.degree ?? '',
+      department: edu?.department ?? '',
+      description: edu?.description ?? '',
+      gpa: edu?.gpa ?? null,
+      start_date: edu?.start_date ?? '',
+      end_date: edu?.end_date ?? '',
+    })
+  }
 
   if (isLoading) return <PageSkeleton />
 
@@ -49,11 +84,28 @@ export function EducationPage() {
       key: 'university',
       header: 'Institution',
       render: (edu: Education) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-surface-hover)] flex items-center justify-center"><GraduationCap className="w-4 h-4 text-[var(--color-text-tertiary)]" /></div>
-          <div>
-            <p className="font-medium text-[var(--color-text)]">{edu.university}</p>
-            <p className="text-xs text-[var(--color-text-tertiary)]">{edu.degree} - {edu.department}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: 'var(--color-surface-hover)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <ReadOutlined style={{ color: 'var(--color-text-tertiary)' }} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <Typography.Text strong ellipsis style={{ display: 'block', maxWidth: 260 }}>
+              {edu.university}
+            </Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {edu.degree} - {edu.department}
+            </Typography.Text>
           </div>
         </div>
       ),
@@ -61,70 +113,128 @@ export function EducationPage() {
     {
       key: 'period',
       header: 'Period',
-      render: (edu: Education) => <span className="text-sm text-[var(--color-text-secondary)]">{edu.start_date} - {edu.end_date || 'Present'}</span>,
+      width: 220,
+      render: (edu: Education) => (
+        <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+          {edu.start_date} - {edu.end_date || 'Present'}
+        </Typography.Text>
+      ),
     },
     {
       key: 'gpa',
       header: 'GPA',
-      render: (edu: Education) => edu.gpa ? <span className="text-sm font-medium">{edu.gpa}</span> : <span className="text-sm text-[var(--color-text-tertiary)]">-</span>,
+      width: 90,
+      render: (edu: Education) =>
+        edu.gpa ? (
+          <Typography.Text strong>{edu.gpa}</Typography.Text>
+        ) : (
+          <Typography.Text type="secondary">-</Typography.Text>
+        ),
     },
     {
       key: 'actions',
       header: '',
+      width: 90,
       render: (edu: Education) => (
-        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => { setEditing(edu); setShowForm(true) }} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)]"><Pencil className="w-4 h-4" /></button>
+        <Space size={0} onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Edit">
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => openForm(edu)} />
+          </Tooltip>
           <DeleteButton onDelete={() => deleteMutation.mutateAsync(edu.id)} />
-        </div>
+        </Space>
       ),
     },
   ]
 
   return (
     <div>
-      <PageHeader title="Education" description="Manage your education history" actions={
-        <button onClick={() => { setEditing(null); setShowForm(true) }} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)] transition-colors"><Plus className="w-4 h-4" />Add Education</button>
-      } />
+      <PageHeader
+        title="Education"
+        description="Manage your education history"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Education' }]}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openForm(null)}>
+            Add Education
+          </Button>
+        }
+      />
+
       <DataTable columns={columns} data={data?.data ?? []} keyExtractor={(e) => e.id} />
       {data && <Pagination page={page} pageSize={pageSize} total={data.count} onPageChange={setPage} />}
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowForm(false); setEditing(null) }} />
-          <div className="relative bg-[var(--color-surface)] rounded-2xl shadow-dialog border border-[var(--color-border)] p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold text-[var(--color-text)] mb-6">{editing ? 'Edit Education' : 'Add Education'}</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              const form = new FormData(e.currentTarget)
-              saveMutation.mutate({
-                university: form.get('university') as string,
-                degree: form.get('degree') as string,
-                department: form.get('department') as string,
-                description: form.get('description') as string,
-                gpa: form.get('gpa') ? Number(form.get('gpa')) : null,
-                start_date: form.get('start_date') as string,
-                end_date: form.get('end_date') as string || null,
-              })
-            }} className="space-y-4">
-              <Input label="University" name="university" defaultValue={editing?.university} required />
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Degree" name="degree" defaultValue={editing?.degree} required />
-                <Input label="Department" name="department" defaultValue={editing?.department} />
-              </div>
-              <Textarea label="Description" name="description" defaultValue={editing?.description} rows={3} />
-              <div className="grid grid-cols-3 gap-4">
-                <Input label="GPA" name="gpa" type="number" step="0.01" defaultValue={editing?.gpa?.toString() || ''} />
-                <Input label="Start Date" name="start_date" type="date" defaultValue={editing?.start_date} required />
-                <Input label="End Date" name="end_date" type="date" defaultValue={editing?.end_date || ''} />
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
-                <button type="button" onClick={() => { setShowForm(false); setEditing(null) }} className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]">Cancel</button>
-                <button type="submit" disabled={saveMutation.isPending} className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)] disabled:opacity-50">{saveMutation.isPending ? 'Saving...' : 'Save'}</button>
-              </div>
-            </form>
+      <Modal
+        open={showForm}
+        onCancel={() => {
+          setShowForm(false)
+          setEditing(null)
+        }}
+        footer={null}
+        title={editing ? 'Edit Education' : 'Add Education'}
+        width={560}
+        destroyOnHidden forceRender
+      >
+        <Form<EducationFormValues>
+          form={form}
+          layout="vertical"
+          onFinish={(values) => saveMutation.mutate(values)}
+          style={{ marginTop: 16 }}
+        >
+          <Form.Item
+            name="university"
+            label="University"
+            rules={[{ required: true, message: 'University is required' }]}
+          >
+            <Input placeholder="University name" />
+          </Form.Item>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <Form.Item
+              name="degree"
+              label="Degree"
+              rules={[{ required: true, message: 'Degree is required' }]}
+            >
+              <Input placeholder="e.g. Bachelor of Science" />
+            </Form.Item>
+            <Form.Item name="department" label="Department">
+              <Input placeholder="e.g. Computer Science" />
+            </Form.Item>
           </div>
-        </div>
-      )}
+
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={3} placeholder="Details about your studies" />
+          </Form.Item>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 16px' }}>
+            <Form.Item name="gpa" label="GPA">
+              <InputNumber min={0} max={4} step={0.01} placeholder="3.5" style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item
+              name="start_date"
+              label="Start Date"
+              rules={[{ required: true, message: 'Start date is required' }]}
+            >
+              <Input type="date" />
+            </Form.Item>
+            <Form.Item name="end_date" label="End Date">
+              <Input type="date" />
+            </Form.Item>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
+            <Button
+              onClick={() => {
+                setShowForm(false)
+                setEditing(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>
+              Save
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   )
 }

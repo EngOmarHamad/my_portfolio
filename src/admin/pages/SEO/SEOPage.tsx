@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Card, Col, Form, Input, Row, Typography } from 'antd'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
-import { Input, Textarea } from '@/admin/components/ui/FormField'
 import { ImageUpload } from '@/admin/components/ui/ImageUpload'
-import { toast } from 'sonner'
+import { toast } from '@/shared/lib/toast'
 import type { SEO } from '@/admin/types'
+
+type SEOFormValues = Omit<SEO, 'keywords'> & { keywords: string }
 
 const seoService = createBaseService<SEO>('seo')
 
@@ -23,49 +25,138 @@ export function SEOPage() {
   const mutation = useMutation({
     mutationFn: (values: Partial<SEO>) =>
       seo ? seoService.update(seo.id, values) : seoService.create(values),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['seo'] }); toast.success('SEO settings updated') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seo'] })
+      toast.success('SEO settings updated')
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to update'),
   })
 
   if (isLoading) return <PageSkeleton />
 
+  const handleFinish = (values: Partial<SEOFormValues>) => {
+    const keywords = (values.keywords ?? '')
+      .split(',')
+      .map((keyword) => keyword.trim())
+      .filter(Boolean)
+    mutation.mutate({ ...values, keywords } as Partial<SEO>)
+  }
+
   return (
     <div>
-      <PageHeader title="SEO" description="Manage SEO settings for your portfolio" />
-      <form onSubmit={(e) => { e.preventDefault(); const form = new FormData(e.currentTarget); mutation.mutate(Object.fromEntries(form) as unknown as Partial<SEO>) }} className="max-w-2xl space-y-6">
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-4">
-          <h2 className="text-lg font-semibold">General</h2>
-          <Input label="Site Title" name="site_title" defaultValue={seo?.site_title} />
-          <Textarea label="Site Description" name="site_description" defaultValue={seo?.site_description} rows={3} />
-          <Input label="Keywords (comma separated)" name="keywords" defaultValue={seo?.keywords?.join(', ')} />
-          <Input label="Canonical URL" name="canonical_url" defaultValue={seo?.canonical_url} placeholder="https://example.com" />
-          <Input label="Robots" name="robots" defaultValue={seo?.robots || 'index, follow'} />
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Favicon</label>
-            <ImageUpload value={seo?.favicon_url} onChange={(url) => mutation.mutate({ favicon_url: url })} bucket="uploads" aspectRatio="1/1" className="max-w-[100px]" />
-          </div>
-        </div>
+      <PageHeader
+        title="SEO"
+        description="Manage SEO settings for your portfolio"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'SEO' }]}
+      />
 
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Open Graph</h2>
-          <Input label="OG Title" name="og_title" defaultValue={seo?.og_title} />
-          <Textarea label="OG Description" name="og_description" defaultValue={seo?.og_description} rows={2} />
-          <div className="space-y-2">
-            <label className="text-sm font-medium">OG Image</label>
-            <ImageUpload value={seo?.og_image_url} onChange={(url) => mutation.mutate({ og_image_url: url })} bucket="uploads" />
-          </div>
-        </div>
+      <Form<Partial<SEOFormValues>>
+        layout="vertical"
+        onFinish={handleFinish}
+        initialValues={{
+          site_title: seo?.site_title,
+          site_description: seo?.site_description,
+          keywords: seo?.keywords?.join(', '),
+          canonical_url: seo?.canonical_url,
+          robots: seo?.robots ?? 'index, follow',
+          og_title: seo?.og_title,
+          og_description: seo?.og_description,
+          twitter_handle: seo?.twitter_handle,
+          twitter_card: seo?.twitter_card ?? 'summary_large_image',
+        }}
+        style={{ maxWidth: 672 }}
+      >
+        <Card size="small" style={{ marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
+          <Typography.Title level={5} style={{ marginTop: 0 }}>
+            General
+          </Typography.Title>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item name="site_title" label="Site Title">
+                <Input placeholder="My Portfolio" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="canonical_url" label="Canonical URL">
+                <Input placeholder="https://example.com" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item name="site_description" label="Site Description">
+            <Input.TextArea rows={3} placeholder="Brief description of your site" />
+          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item name="keywords" label="Keywords (comma separated)">
+                <Input placeholder="developer, portfolio, react" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="robots" label="Robots">
+                <Input placeholder="index, follow" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item label="Favicon">
+            <div style={{ maxWidth: 100 }}>
+              <ImageUpload
+                value={seo?.favicon_url}
+                onChange={(url) => mutation.mutate({ favicon_url: url })}
+                bucket="uploads"
+              />
+            </div>
+          </Form.Item>
+        </Card>
 
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Twitter Card</h2>
-          <Input label="Twitter Handle" name="twitter_handle" defaultValue={seo?.twitter_handle} placeholder="@username" />
-          <Input label="Twitter Card Type" name="twitter_card" defaultValue={seo?.twitter_card || 'summary_large_image'} />
-        </div>
+        <Card size="small" style={{ marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
+          <Typography.Title level={5} style={{ marginTop: 0 }}>
+            Open Graph
+          </Typography.Title>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item name="og_title" label="OG Title">
+                <Input placeholder="Site title for social sharing" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="og_description" label="OG Description">
+                <Input.TextArea rows={2} placeholder="Site description for social sharing" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item label="OG Image">
+            <ImageUpload
+              value={seo?.og_image_url}
+              onChange={(url) => mutation.mutate({ og_image_url: url })}
+              bucket="uploads"
+            />
+          </Form.Item>
+        </Card>
 
-        <div className="flex justify-end">
-          <button type="submit" disabled={mutation.isPending} className="px-6 py-2.5 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white disabled:opacity-50">{mutation.isPending ? 'Saving...' : 'Save Changes'}</button>
+        <Card size="small" style={{ marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
+          <Typography.Title level={5} style={{ marginTop: 0 }}>
+            Twitter Card
+          </Typography.Title>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item name="twitter_handle" label="Twitter Handle">
+                <Input placeholder="@username" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="twitter_card" label="Twitter Card Type">
+                <Input placeholder="summary_large_image" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Card>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button type="primary" htmlType="submit" loading={mutation.isPending}>
+            Save Changes
+          </Button>
         </div>
-      </form>
+      </Form>
     </div>
   )
 }

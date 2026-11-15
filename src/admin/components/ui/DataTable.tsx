@@ -1,14 +1,13 @@
-import type { ReactNode } from 'react'
-import { cn } from '@/utils/cn'
-import { LoadingSkeleton } from './LoadingSkeleton'
-import { EmptyState } from './EmptyState'
+import { Spin, Table } from 'antd'
 import { ErrorState } from './ErrorState'
+import { EmptyState } from './EmptyState'
 
 export interface Column<T> {
   key: string
   header: string
-  render: (item: T) => ReactNode
+  render: (item: T) => React.ReactNode
   sortable?: boolean
+  width?: number | string
   className?: string
 }
 
@@ -31,6 +30,10 @@ interface DataTableProps<T> {
   onSort?: (key: string) => void
 }
 
+/**
+ * Standard data table built on Ant Design Table.
+ * Pages own pagination/search; this renders a professional, consistent table.
+ */
 export function DataTable<T extends Record<string, any>>({
   columns,
   data,
@@ -49,90 +52,118 @@ export function DataTable<T extends Record<string, any>>({
   sortOrder,
   onSort,
 }: DataTableProps<T>) {
-  if (isLoading) {
-    return <LoadingSkeleton rows={5} cols={columns.length} />
-  }
-
   if (isError) {
     return <ErrorState message={error?.message} onRetry={onRetry} />
   }
 
-  if (!data.length) {
-    return (
-      <EmptyState
-        title={emptyMessage || 'No data found'}
-        description={emptyDescription || 'There are no items to display.'}
-      />
-    )
-  }
+  const hasSelection = Boolean(onSelect && onSelectAll)
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-            {onSelect && onSelectAll && (
-              <th className="w-10 px-4 py-3">
-                <input
-                  type="checkbox"
-                  onChange={onSelectAll}
-                  checked={selectedIds?.length === data.length}
-                  className="rounded border-[var(--color-border)]"
-                />
-              </th>
-            )}
-            {columns.map((col) => (
-              <th
-                key={col.key}
-                className={cn(
-                  'px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)]',
-                  col.sortable && 'cursor-pointer hover:text-[var(--color-text)]',
-                  col.className
-                )}
-                onClick={() => col.sortable && onSort?.(col.key)}
-              >
-                <div className="flex items-center gap-1">
-                  {col.header}
-                  {col.sortable && sortBy === col.key && (
-                    <span className="text-[10px]">
-                      {sortOrder === 'asc' ? '\u2191' : '\u2193'}
-                    </span>
-                  )}
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[var(--color-border)]">
-          {data.map((item) => (
-            <tr
-              key={keyExtractor(item)}
-              className={cn(
-                'transition-colors hover:bg-[var(--color-surface-hover)]',
-                onRowClick && 'cursor-pointer'
-              )}
-              onClick={() => onRowClick?.(item)}
-            >
-              {onSelect && (
-                <td className="w-10 px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds?.includes(keyExtractor(item))}
-                    onChange={() => onSelect(keyExtractor(item))}
-                    onClick={(e) => e.stopPropagation()}
-                    className="rounded border-[var(--color-border)]"
-                  />
-                </td>
-              )}
-              {columns.map((col) => (
-                <td key={col.key} className={cn('px-4 py-3 text-sm', col.className)}>
-                  {col.render(item)}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Spin spinning={Boolean(isLoading)}>
+      <div
+        className="admin-data-table"
+        style={{
+          background: 'var(--ant-color-bg-container, #fff)',
+          border: '1px solid var(--ant-color-border-secondary, #edf1f7)',
+          borderRadius: 16,
+          overflow: 'hidden',
+        }}
+      >
+        <style>{`
+          .admin-data-table .ant-table {
+            background: transparent !important;
+          }
+          .admin-data-table .ant-table-container {
+            border-inline-start: 0 !important;
+            border-top: 0 !important;
+          }
+          .admin-data-table .ant-table-thead > tr > th {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ant-color-text-secondary, #475569) !important;
+            background: var(--ant-color-bg-container, #fff) !important;
+            border-bottom: 1px solid var(--ant-color-border-secondary, #edf1f7) !important;
+            padding-top: 14px !important;
+            padding-bottom: 14px !important;
+            white-space: nowrap;
+          }
+          .admin-data-table .ant-table-thead > tr > th::before {
+            display: none !important;
+          }
+          .admin-data-table .ant-table-tbody > tr > td {
+            padding-top: 14px !important;
+            padding-bottom: 14px !important;
+            border-bottom: 1px solid var(--ant-color-border-secondary, #f0f3f8) !important;
+            color: var(--ant-color-text, #0f172a);
+          }
+          .admin-data-table .ant-table-tbody > tr:last-child > td {
+            border-bottom: none !important;
+          }
+          .admin-data-table .ant-table-tbody > tr.ant-table-row:hover > td {
+            background: var(--ant-color-fill-quaternary, #f8fafc) !important;
+          }
+          .admin-data-table .ant-table-tbody > tr.ant-table-row-selected > td {
+            background: var(--ant-color-primary-bg, rgba(25,53,75,0.06)) !important;
+          }
+          .admin-data-table .ant-table-cell-row-hover {
+            background: transparent !important;
+          }
+          .admin-data-table .ant-table-selection-column {
+            padding-inline-start: 18px !important;
+            padding-inline-end: 8px !important;
+          }
+          .admin-data-table .ant-table-placeholder .ant-table-cell {
+            padding: 28px 16px !important;
+          }
+          .admin-data-table .ant-spin-nested-loading,
+          .admin-data-table .ant-spin-container {
+            background: transparent;
+          }
+        `}</style>
+        <Table<T>
+          rowKey={keyExtractor}
+          size="middle"
+          columns={columns.map((col) => ({
+            key: col.key,
+            title: col.header,
+            dataIndex: col.key,
+            width: col.width,
+            render: (_value: unknown, record: T) => col.render(record),
+            sorter: col.sortable && onSort ? true : undefined,
+            sortOrder: sortBy === col.key ? (sortOrder === 'asc' ? 'ascend' : 'descend') : undefined,
+            className: col.className,
+          }))}
+          dataSource={data}
+          pagination={false}
+          scroll={{ x: 'max-content' }}
+          onChange={(_pagination, _filters, sorter) => {
+            const s = Array.isArray(sorter) ? sorter[0] : sorter
+            if (s?.columnKey && onSort) onSort(String(s.columnKey))
+          }}
+          onRow={
+            onRowClick
+              ? (record) => ({ onClick: () => onRowClick(record), style: { cursor: 'pointer' } })
+              : undefined
+          }
+          rowSelection={
+            hasSelection
+              ? {
+                  selectedRowKeys: selectedIds ?? [],
+                  onSelect: (record) => onSelect?.(keyExtractor(record as T)),
+                  onSelectAll: () => onSelectAll?.(),
+                }
+              : undefined
+          }
+          locale={{
+            emptyText: (
+              <EmptyState
+                title={emptyMessage || 'No data found'}
+                description={emptyDescription || 'There are no items to display.'}
+              />
+            ),
+          }}
+        />
+      </div>
+    </Spin>
   )
 }

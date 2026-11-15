@@ -293,6 +293,8 @@ export interface TimelineItem {
   is_published: boolean
   created_at: string
   updated_at: string
+  start_date?: string
+  end_date?: string
 }
 
 export interface Resume {
@@ -364,5 +366,5 @@ export type TableName =
   | 'testimonials' | 'achievements' | 'blog_posts'
   | 'gallery_categories' | 'gallery_images'
   | 'contact_info' | 'contact_messages' | 'social_links'
-  | 'tech_stack' | 'timeline_items' | 'resume'
+  | 'timeline_items' | 'resume'
   | 'seo' | 'settings'

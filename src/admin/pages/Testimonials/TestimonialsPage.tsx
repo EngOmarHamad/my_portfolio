@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Form, Input, InputNumber, Modal, Space, Tooltip, Typography } from 'antd'
+import { PlusOutlined, EditOutlined, StarFilled } from '@ant-design/icons'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
@@ -7,96 +9,219 @@ import { DataTable } from '@/admin/components/ui/DataTable'
 import { Pagination } from '@/admin/components/ui/Pagination'
 import { StatusBadge } from '@/admin/components/ui/StatusBadge'
 import { DeleteButton } from '@/admin/components/ui/DeleteButton'
-import { Input, Textarea } from '@/admin/components/ui/FormField'
 import { ImageUpload } from '@/admin/components/ui/ImageUpload'
-import { toast } from 'sonner'
-import { Plus, Pencil, Star } from 'lucide-react'
+import { toast } from '@/shared/lib/toast'
 import type { Testimonial } from '@/admin/types'
 
 const testimonialService = createBaseService<Testimonial>('testimonials')
+
+interface TestimonialFormValues {
+  client_name: string
+  company: string
+  review: string
+  rating: number
+}
 
 export function TestimonialsPage() {
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<Testimonial | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
+  const [form] = Form.useForm<TestimonialFormValues>()
   const queryClient = useQueryClient()
   const pageSize = 10
 
-  const { data, isLoading } = useQuery({ queryKey: ['testimonials', page], queryFn: () => testimonialService.list({ page, pageSize }) })
+  const { data, isLoading } = useQuery({
+    queryKey: ['testimonials', page],
+    queryFn: () => testimonialService.list({ page, pageSize }),
+  })
+
+  const openForm = (testimonial: Testimonial | null) => {
+    setEditing(testimonial)
+    setImageUrl(testimonial?.image_url ?? '')
+    setShowForm(true)
+    form.setFieldsValue({
+      client_name: testimonial?.client_name ?? '',
+      company: testimonial?.company ?? '',
+      review: testimonial?.review ?? '',
+      rating: testimonial?.rating ?? 5,
+    })
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditing(null)
+  }
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => testimonialService.remove(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['testimonials'] }); toast.success('Testimonial deleted') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['testimonials'] })
+      toast.success('Testimonial deleted')
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to delete'),
   })
 
   const saveMutation = useMutation({
-    mutationFn: (values: Partial<Testimonial>) => editing ? testimonialService.update(editing.id, values) : testimonialService.create(values),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['testimonials'] }); toast.success(editing ? 'Testimonial updated' : 'Testimonial created'); setShowForm(false); setEditing(null) },
+    mutationFn: (values: TestimonialFormValues) => {
+      const payload: Partial<Testimonial> = {
+        client_name: values.client_name,
+        company: values.company,
+        review: values.review,
+        rating: values.rating ?? 5,
+        image_url: imageUrl,
+        is_published: true,
+      }
+      return editing ? testimonialService.update(editing.id, payload) : testimonialService.create(payload)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['testimonials'] })
+      toast.success(editing ? 'Testimonial updated' : 'Testimonial created')
+      setShowForm(false)
+      setEditing(null)
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to save'),
   })
 
   if (isLoading) return <PageSkeleton />
 
   const columns = [
-    { key: 'client', header: 'Client', render: (t: Testimonial) => (
-      <div className="flex items-center gap-3">
-        {t.image_url ? <img src={t.image_url} alt="" className="w-8 h-8 rounded-full object-cover" /> : <div className="w-8 h-8 rounded-full bg-[var(--color-surface-hover)] flex items-center justify-center text-xs">{t.client_name.charAt(0)}</div>}
-        <div><p className="font-medium text-[var(--color-text)]">{t.client_name}</p><p className="text-xs text-[var(--color-text-tertiary)]">{t.company}</p></div>
-      </div>
-    )},
-    { key: 'rating', header: 'Rating', render: (t: Testimonial) => <div className="flex items-center gap-0.5">{Array.from({ length: t.rating }).map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />)}</div> },
-    { key: 'is_published', header: 'Status', render: (t: Testimonial) => <StatusBadge status={t.is_published ? 'published' : 'draft'} /> },
-    { key: 'actions', header: '', render: (t: Testimonial) => (
-      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => { setEditing(t); setShowForm(true) }} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)]"><Pencil className="w-4 h-4" /></button>
-        <DeleteButton onDelete={() => deleteMutation.mutateAsync(t.id)} />
-      </div>
-    )},
+    {
+      key: 'client',
+      header: 'Client',
+      render: (t: Testimonial) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {t.image_url ? (
+            <img
+              src={t.image_url}
+              alt=""
+              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'var(--color-surface-hover)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 12,
+                color: 'var(--color-text-tertiary)',
+              }}
+            >
+              {t.client_name.charAt(0)}
+            </div>
+          )}
+          <div style={{ minWidth: 0 }}>
+            <Typography.Text strong ellipsis style={{ display: 'block', maxWidth: 220 }}>
+              {t.client_name}
+            </Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {t.company || '—'}
+            </Typography.Text>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'rating',
+      header: 'Rating',
+      width: 140,
+      render: (t: Testimonial) => (
+        <Space size={2}>
+          {Array.from({ length: t.rating }).map((_, i) => (
+            <StarFilled key={i} style={{ color: '#f59e0b', fontSize: 13 }} />
+          ))}
+        </Space>
+      ),
+    },
+    {
+      key: 'is_published',
+      header: 'Status',
+      width: 110,
+      render: (t: Testimonial) => <StatusBadge status={t.is_published ? 'published' : 'draft'} />,
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: 100,
+      render: (t: Testimonial) => (
+        <Space size={0} onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Edit">
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => openForm(t)} />
+          </Tooltip>
+          <DeleteButton onDelete={() => deleteMutation.mutateAsync(t.id)} />
+        </Space>
+      ),
+    },
   ]
 
   return (
     <div>
-      <PageHeader title="Testimonials" description="Manage client testimonials" actions={
-        <button onClick={() => { setEditing(null); setShowForm(true) }} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white"><Plus className="w-4 h-4" />Add Testimonial</button>
-      } />
+      <PageHeader
+        title="Testimonials"
+        description="Manage client testimonials"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Testimonials' }]}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openForm(null)}>
+            Add Testimonial
+          </Button>
+        }
+      />
+
       <DataTable columns={columns} data={data?.data ?? []} keyExtractor={(t) => t.id} />
+
       {data && <Pagination page={page} pageSize={pageSize} total={data.count} onPageChange={setPage} />}
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowForm(false); setEditing(null) }} />
-          <div className="relative bg-[var(--color-surface)] rounded-2xl shadow-dialog border border-[var(--color-border)] p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold mb-6">{editing ? 'Edit Testimonial' : 'Add Testimonial'}</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              const form = new FormData(e.currentTarget)
-              saveMutation.mutate({
-                client_name: form.get('client_name') as string,
-                company: form.get('company') as string,
-                review: form.get('review') as string,
-                rating: Number(form.get('rating')) || 5,
-                is_published: true,
-              })
-            }} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Client Name" name="client_name" defaultValue={editing?.client_name} required />
-                <Input label="Company" name="company" defaultValue={editing?.company} />
-              </div>
-              <Textarea label="Review" name="review" defaultValue={editing?.review} rows={4} required />
-              <Input label="Rating (1-5)" name="rating" type="number" min="1" max="5" defaultValue={editing?.rating?.toString() || '5'} />
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Client Photo</label>
-                <ImageUpload value={editing?.image_url} onChange={(url) => saveMutation.mutate({ image_url: url })} bucket="avatars" aspectRatio="1/1" className="max-w-[120px]" />
-              </div>
-              <div className="flex justify-end gap-2 pt-4">
-                <button type="button" onClick={() => { setShowForm(false); setEditing(null) }} className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--color-border)]">Cancel</button>
-                <button type="submit" disabled={saveMutation.isPending} className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white disabled:opacity-50">{saveMutation.isPending ? 'Saving...' : 'Save'}</button>
-              </div>
-            </form>
+      <Modal
+        open={showForm}
+        onCancel={closeForm}
+        footer={null}
+        title={editing ? 'Edit Testimonial' : 'Add Testimonial'}
+        width={560}
+        destroyOnHidden forceRender
+      >
+        <Form<TestimonialFormValues>
+          form={form}
+          layout="vertical"
+          onFinish={(values) => saveMutation.mutate(values)}
+          style={{ marginTop: 16 }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <Form.Item
+              name="client_name"
+              label="Client Name"
+              rules={[{ required: true, message: 'Client name is required' }]}
+            >
+              <Input placeholder="Jane Doe" />
+            </Form.Item>
+            <Form.Item name="company" label="Company">
+              <Input placeholder="Acme Inc." />
+            </Form.Item>
           </div>
-        </div>
-      )}
+
+          <Form.Item name="review" label="Review" rules={[{ required: true, message: 'Review is required' }]}>
+            <Input.TextArea rows={4} placeholder="What did the client say?" />
+          </Form.Item>
+
+          <Form.Item name="rating" label="Rating (1-5)">
+            <InputNumber min={1} max={5} style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item label="Client Photo">
+            <ImageUpload value={imageUrl} onChange={setImageUrl} bucket="avatars" />
+          </Form.Item>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
+            <Button onClick={closeForm}>Cancel</Button>
+            <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>
+              {editing ? 'Save Changes' : 'Save'}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   )
 }

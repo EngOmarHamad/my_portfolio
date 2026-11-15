@@ -33,6 +33,22 @@ export function useProjects() {
   })
 }
 
+export function useServices() {
+  return useQuery({
+    queryKey: ['portfolio', 'services'],
+    queryFn: portfolioService.getServices,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useGalleryImages() {
+  return useQuery({
+    queryKey: ['portfolio', 'gallery'],
+    queryFn: portfolioService.getGalleryImages,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
 export function useProjectBySlug(slug: string) {
   return useQuery({
     queryKey: ['portfolio', 'project', slug],

@@ -2,6 +2,8 @@ import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { AdminLayout } from '@/admin/layouts/AdminLayout'
 
+const CreateCVPage = lazy(() => import('./pages/CreateCV/CreateCVPage').then((m) => ({ default: m.CreateCVPage })))
+
 const LoginPage = lazy(() => import('@/admin/pages/Auth/LoginPage').then((m) => ({ default: m.LoginPage })))
 const ResetPasswordPage = lazy(() => import('@/admin/pages/Auth/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
 const DataViewerPage = lazy(() => import('@/admin/pages/DataViewer').then((m) => ({ default: m.DataViewerPage })))
@@ -20,18 +22,19 @@ const BlogPage = lazy(() => import('@/admin/pages/Blog').then((m) => ({ default:
 const GalleryPage = lazy(() => import('@/admin/pages/Gallery').then((m) => ({ default: m.GalleryPage })))
 const ContactPage = lazy(() => import('@/admin/pages/Contact').then((m) => ({ default: m.ContactPage })))
 const SocialLinksPage = lazy(() => import('@/admin/pages/SocialLinks').then((m) => ({ default: m.SocialLinksPage })))
-const TechStackPage = lazy(() => import('@/admin/pages/TechStack').then((m) => ({ default: m.TechStackPage })))
 const TimelinePage = lazy(() => import('@/admin/pages/Timeline').then((m) => ({ default: m.TimelinePage })))
 const ResumePage = lazy(() => import('@/admin/pages/Resume').then((m) => ({ default: m.ResumePage })))
 const SEOPage = lazy(() => import('@/admin/pages/SEO').then((m) => ({ default: m.SEOPage })))
+const MessagesPage = lazy(() => import('@/admin/pages/Messages').then((m) => ({ default: m.MessagesPage })))
 const SettingsPage = lazy(() => import('@/admin/pages/Settings').then((m) => ({ default: m.SettingsPage })))
+const CVFromDataPage = lazy(() => import('@/admin/pages/CVFromData/CVFromDataPage').then((m) => ({ default: m.CVFromDataPage })))
 
 function AdminLoader() {
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+    <div className="min-h-screen bg-bg flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
-        <div className="h-8 w-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
-        <p className="text-sm text-[var(--color-text-tertiary)]">Loading...</p>
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <p className="text-sm text-text-tertiary">Loading...</p>
       </div>
     </div>
   )
@@ -57,14 +60,16 @@ export function AdminRouter() {
           <Route path="achievements" element={<AchievementsPage />} />
           <Route path="blog" element={<BlogPage />} />
           <Route path="gallery" element={<GalleryPage />} />
+          <Route path="messages" element={<MessagesPage />} />
           <Route path="contact" element={<ContactPage />} />
           <Route path="social-links" element={<SocialLinksPage />} />
-          <Route path="tech-stack" element={<TechStackPage />} />
           <Route path="timeline" element={<TimelinePage />} />
           <Route path="resume" element={<ResumePage />} />
           <Route path="seo" element={<SEOPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="data" element={<DataViewerPage />} />
+          <Route path="create-cv" element={<CreateCVPage />} />
+          <Route path="cv-from-data" element={<CVFromDataPage />} />
         </Route>
       </Routes>
     </Suspense>

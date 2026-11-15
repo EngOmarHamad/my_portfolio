@@ -4,23 +4,23 @@ import { cn } from '@/shared/utils/cn'
 
 const variants = {
   primary:
-    'bg-primary text-white shadow-soft hover:bg-primary-light hover:shadow-elevated',
+    'bg-gradient-to-br from-primary to-[var(--color-primary-dark)] text-white shadow-[0_10px_28px_-10px_var(--color-primary-glow)] hover:shadow-[0_16px_38px_-10px_var(--color-primary-glow)] hover:-translate-y-px border border-white/10',
   accent:
-    'bg-accent text-white shadow-soft hover:bg-accent-light hover:shadow-elevated',
+    'bg-gradient-to-br from-accent-light to-accent-dark text-white shadow-[0_10px_28px_-12px_var(--color-accent-glow)] hover:-translate-y-px',
   ghost:
     'bg-transparent text-text-secondary hover:text-text hover:bg-surface-hover',
   outline:
-    'bg-transparent text-text border border-border hover:border-primary hover:text-primary',
+    'bg-transparent text-text border-[1.5px] border-border hover:border-primary hover:text-primary-light hover:bg-primary/5',
   subtle:
-    'bg-surface text-text-secondary border border-border/60 hover:text-text hover:bg-surface-hover',
+    'bg-surface text-text-secondary border border-border/70 hover:text-text hover:bg-surface-hover hover:border-border',
 } as const
 
 const sizes = {
-  xs: 'px-3 py-1.5 text-xs',
-  sm: 'px-4 py-2 text-sm',
-  md: 'px-5 py-2.5 text-sm',
-  lg: 'px-7 py-3 text-base',
-  xl: 'px-8 py-3.5 text-base',
+  xs: 'px-3 py-1.5 text-xs rounded-lg',
+  sm: 'px-4 py-2 text-sm rounded-lg',
+  md: 'px-5 py-2.5 text-sm rounded-xl',
+  lg: 'px-7 py-3 text-[15px] rounded-xl',
+  xl: 'px-8 py-3.5 text-base rounded-xl',
 } as const
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

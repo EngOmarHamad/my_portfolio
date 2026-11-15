@@ -4,7 +4,7 @@ import { useAuthStore } from '@/admin/stores/auth-store'
 import { authService } from '@/admin/services/auth-service'
 
 export function useAuth() {
-  const { user, isLoading, isAuthenticated, setUser, setLoading, logout } = useAuthStore()
+  const { user, isLoading, isAuthenticated, setUser, logout } = useAuthStore()
 
   useEffect(() => {
     const init = async () => {

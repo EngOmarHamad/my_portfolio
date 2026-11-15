@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Card, Form, Input, InputNumber, Switch, Typography } from 'antd'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
-import { Input, Textarea, Toggle } from '@/admin/components/ui/FormField'
 import { ImageUpload } from '@/admin/components/ui/ImageUpload'
-import { toast } from 'sonner'
+import { toast } from '@/shared/lib/toast'
 import type { About } from '@/admin/types'
 
 const aboutService = createBaseService<About>('about')
@@ -36,67 +36,67 @@ export function AboutPage() {
 
   return (
     <div>
-      <PageHeader title="About" description="Manage your about section" />
+      <PageHeader
+        title="About"
+        description="Manage your about section"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'About' }]}
+      />
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          const form = new FormData(e.currentTarget)
-          const values: Record<string, unknown> = {}
-          form.forEach((v, k) => { values[k] = v })
-          mutation.mutate(values as unknown as Partial<About>)
+      <Form<Partial<About>>
+        layout="vertical"
+        onFinish={(values) => mutation.mutate(values)}
+        initialValues={{
+          biography: about?.biography,
+          years_experience: Number(about?.years_experience ?? 0),
         }}
-        className="max-w-3xl space-y-8"
+        style={{ maxWidth: 768 }}
       >
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-[var(--color-text)]">Profile</h2>
+        <Card size="small" style={{ marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
+          <Typography.Title level={5} style={{ marginTop: 0 }}>
+            Profile
+          </Typography.Title>
+          <Form.Item label="Profile Image">
+            <div style={{ maxWidth: 200 }}>
+              <ImageUpload
+                value={about?.profile_image_url}
+                onChange={(url) => mutation.mutate({ profile_image_url: url })}
+                bucket="avatars"
+              />
+            </div>
+          </Form.Item>
+          <Form.Item name="biography" label="Biography">
+            <Input.TextArea rows={6} placeholder="Write your biography..." />
+          </Form.Item>
+          <Form.Item name="years_experience" label="Years of Experience">
+            <InputNumber min={0} style={{ width: '100%' }} />
+          </Form.Item>
+        </Card>
 
-          <div>
-            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">Profile Image</label>
-            <ImageUpload
-              value={about?.profile_image_url}
-              onChange={(url) => mutation.mutate({ profile_image_url: url })}
-              bucket="avatars"
-              aspectRatio="1/1"
-              className="max-w-[200px]"
+        <Card size="small" style={{ marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
+          <Typography.Title level={5} style={{ marginTop: 0 }}>
+            Status
+          </Typography.Title>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div>
+              <Typography.Text>Published</Typography.Text>
+              <Typography.Paragraph type="secondary" style={{ marginBottom: 0, fontSize: 12 }}>
+                Show this section on the public site
+              </Typography.Paragraph>
+            </div>
+            <Switch
+              checked={about?.is_published ?? true}
+              onChange={(checked) => mutation.mutate({ is_published: checked })}
+              loading={mutation.isPending}
             />
           </div>
+        </Card>
 
-          <Textarea
-            label="Biography"
-            name="biography"
-            defaultValue={about?.biography}
-            rows={6}
-            placeholder="Write your biography..."
-          />
-
-          <Input
-            label="Years of Experience"
-            name="years_experience"
-            type="number"
-            defaultValue={about?.years_experience?.toString()}
-          />
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button type="primary" htmlType="submit" loading={mutation.isPending}>
+            Save Changes
+          </Button>
         </div>
-
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-[var(--color-text)]">Status</h2>
-          <Toggle
-            label="Published"
-            checked={about?.is_published ?? true}
-            onChange={(checked) => mutation.mutate({ is_published: checked })}
-          />
-        </div>
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className="px-6 py-2.5 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)] disabled:opacity-50 transition-colors"
-          >
-            {mutation.isPending ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </form>
+      </Form>
     </div>
   )
 }

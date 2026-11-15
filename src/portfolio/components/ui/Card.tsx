@@ -6,8 +6,8 @@ export function Glass({ children, className, as: Tag = 'div' }: GlassProps) {
   return (
     <Tag
       className={cn(
-        'rounded-xl border border-border/60 bg-surface/80 backdrop-blur-xl',
-        'shadow-soft transition-shadow duration-300',
+        'rounded-2xl border border-border/70 bg-surface/75 backdrop-blur-xl',
+        'shadow-card transition-all duration-300',
         className,
       )}
     >
@@ -20,13 +20,16 @@ interface CardProps {
   children: ReactNode
   className?: string
   as?: 'div' | 'article' | 'section'
+  hover?: boolean
 }
 
-export function Card({ children, className, as: Tag = 'div' }: CardProps) {
+export function Card({ children, className, as: Tag = 'div', hover = false }: CardProps) {
   return (
     <Tag
       className={cn(
-        'rounded-xl border border-border/50 bg-surface p-6 sm:p-8 shadow-card',
+        'rounded-2xl border border-border/60 bg-surface p-6 sm:p-8 shadow-card',
+        'transition-all duration-300',
+        hover && 'hover:-translate-y-1 hover:shadow-elevated hover:border-border',
         className,
       )}
     >

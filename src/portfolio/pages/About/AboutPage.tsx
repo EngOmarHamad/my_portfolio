@@ -5,23 +5,21 @@ import { Section, SectionHeader } from '@/portfolio/components/ui/Section'
 import { Reveal, StaggerReveal, StaggerItem } from '@/portfolio/components/animations/Reveal'
 import { TimelineCard } from '@/portfolio/components/cards/TimelineCard'
 import { PageTransition } from '@/portfolio/components/layout/PageTransition'
-import { useAbout, useTimelineItems, useAchievements } from '@/portfolio/hooks/use-portfolio-data'
+import { useAbout, useTimelineItems, useAchievements, useProjects, useTechStack } from '@/portfolio/hooks/use-portfolio-data'
+import { ProfileHighlights } from '@/portfolio/components/sections/ProfileHighlights'
 
 export function AboutPage() {
   const { data: about } = useAbout()
   const { data: timeline = [] } = useTimelineItems()
   const { data: achievements = [] } = useAchievements()
+  const { data: projects = [] } = useProjects()
+  const { data: techStack = [] } = useTechStack()
 
-  const stats = about ? [
-    { label: 'Years Experience', value: `${about.years_experience}+` || '8+' },
-    { label: 'Achievements', value: `${achievements.length}+` || '5+' },
-    { label: 'Projects Delivered', value: '15+' },
-    { label: 'Technologies', value: '12+' },
-  ] : [
-    { label: 'Years Experience', value: '8+' },
-    { label: 'Technologies', value: '12+' },
-    { label: 'Certifications', value: '5+' },
-    { label: 'Projects', value: '15+' },
+  const stats = [
+    { label: 'Years Experience', value: String(about?.years_experience ?? 0) },
+    { label: 'Achievements', value: String(achievements.length) },
+    { label: 'Projects Delivered', value: String(projects.length) },
+    { label: 'Technologies', value: String(techStack.length) },
   ]
 
   return (
@@ -63,7 +61,7 @@ export function AboutPage() {
                             whileHover={{ y: -2 }}
                             className={`rounded-xl border ${tints[i]} p-5 text-center shadow-soft hover:shadow-elevated transition-all duration-300`}
                           >
-                            <div className="text-2xl font-serif font-normal text-primary">{stat.value}</div>
+                            <div className="text-2xl font-display font-normal text-primary">{stat.value}</div>
                             <div className="text-xs text-text-tertiary mt-1">{stat.label}</div>
                           </motion.div>
                         </StaggerItem>
@@ -125,6 +123,7 @@ export function AboutPage() {
             </div>
           </Reveal>
         </Section>
+        <ProfileHighlights />
       </main>
     </PageTransition>
   )

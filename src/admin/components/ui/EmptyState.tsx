@@ -1,4 +1,5 @@
-import { Inbox } from 'lucide-react'
+import { Button, Empty, Typography } from 'antd'
+import { InboxOutlined } from '@ant-design/icons'
 
 interface EmptyStateProps {
   title?: string
@@ -15,20 +16,26 @@ export function EmptyState({
   action,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="p-4 rounded-2xl bg-[var(--color-surface-hover)] mb-4">
-        <Inbox className="w-10 h-10 text-[var(--color-text-tertiary)]" />
-      </div>
-      <h3 className="text-lg font-semibold text-[var(--color-text)]">{title}</h3>
-      <p className="mt-1 text-sm text-[var(--color-text-secondary)] max-w-sm text-center">{description}</p>
+    <Empty
+      image={<InboxOutlined style={{ fontSize: 56 }} />}
+      styles={{ image: { height: 72 } }}
+      description={
+        <div>
+          <Typography.Text strong style={{ display: 'block', fontSize: 15 }}>
+            {title}
+          </Typography.Text>
+          <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+            {description}
+          </Typography.Text>
+        </div>
+      }
+      style={{ padding: '32px 16px' }}
+    >
       {action && (
-        <button
-          onClick={action.onClick}
-          className="mt-4 px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)] transition-colors"
-        >
+        <Button type="primary" onClick={action.onClick}>
           {action.label}
-        </button>
+        </Button>
       )}
-    </div>
+    </Empty>
   )
 }

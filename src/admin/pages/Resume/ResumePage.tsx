@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Card, Empty, List, Space, Typography, Upload } from 'antd'
+import { UploadOutlined, DownloadOutlined, FilePdfOutlined, InboxOutlined } from '@ant-design/icons'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { uploadService } from '@/admin/services/upload-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
-import { StatusBadge } from '@/admin/components/ui/StatusBadge'
-import { toast } from 'sonner'
-import { Upload, FileDown, Trash2, Loader2, FileText } from 'lucide-react'
+import { DeleteButton } from '@/admin/components/ui/DeleteButton'
+import { toast } from '@/shared/lib/toast'
 import type { Resume } from '@/admin/types'
 
 const resumeService = createBaseService<Resume>('resume')
@@ -25,18 +26,18 @@ export function ResumePage() {
       await uploadService.remove(resume.file_url, 'resume')
       await resumeService.remove(resume.id)
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['resume'] }); toast.success('Resume deleted') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['resume'] })
+      toast.success('Resume deleted')
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to delete'),
   })
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleUpload = async (file: File) => {
     if (file.type !== 'application/pdf') {
       toast.error('Please upload a PDF file')
-      return
+      return false
     }
-
     setIsUploading(true)
     try {
       const { url } = await uploadService.upload(file, 'resume', `resume_${Date.now()}.pdf`)
@@ -53,81 +54,121 @@ export function ResumePage() {
     } finally {
       setIsUploading(false)
     }
+    return false
   }
 
   if (isLoading) return <PageSkeleton />
 
   const activeResume = resumes?.data?.find((r) => r.is_active)
+  const previousVersions = (resumes?.data ?? []).filter((r) => !r.is_active)
 
   return (
     <div>
-      <PageHeader title="Resume" description="Manage your resume PDF" />
+      <PageHeader
+        title="Resume"
+        description="Manage your resume PDF"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Resume' }]}
+      />
 
-      <div className="max-w-lg space-y-6">
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-          <h2 className="text-lg font-semibold mb-4">Upload Resume</h2>
-          <label className="flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed border-[var(--color-border)] cursor-pointer hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-all">
-            {isUploading ? (
-              <div className="flex flex-col items-center gap-2">
-                <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
-                <span className="text-sm text-[var(--color-text-tertiary)]">Uploading...</span>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2">
-                <div className="p-3 rounded-xl bg-[var(--color-surface-hover)]">
-                  <Upload className="w-6 h-6 text-[var(--color-text-tertiary)]" />
-                </div>
-                <span className="text-sm font-medium">Click to upload PDF</span>
-                <span className="text-xs text-[var(--color-text-tertiary)]">PDF only, max 10MB</span>
-              </div>
-            )}
-            <input type="file" accept=".pdf" onChange={handleUpload} className="hidden" disabled={isUploading} />
-          </label>
-        </div>
+      <div style={{ maxWidth: 640 }}>
+        <Card
+          size="small"
+          style={{ marginBottom: 16 }}
+          styles={{ body: { padding: 24 } }}
+          title="Upload Resume"
+        >
+          <Upload.Dragger
+            accept=".pdf"
+            showUploadList={false}
+            disabled={isUploading}
+            beforeUpload={(file) => {
+              void handleUpload(file)
+              return Upload.LIST_IGNORE
+            }}
+            style={{ padding: 8 }}
+          >
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>
+            <p className="ant-upload-text">{isUploading ? 'Uploading…' : 'Click or drag a PDF to this area'}</p>
+            <p className="ant-upload-hint">PDF only, max 10MB</p>
+          </Upload.Dragger>
+        </Card>
 
-        {activeResume && (
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-            <h2 className="text-lg font-semibold mb-4">Active Resume</h2>
-            <div className="flex items-center justify-between p-4 rounded-xl bg-[var(--color-surface-hover)]">
-              <div className="flex items-center gap-3">
-                <FileText className="w-8 h-8 text-[var(--color-primary)]" />
+        <Card
+          size="small"
+          style={{ marginBottom: 16 }}
+          styles={{ body: { padding: 24 } }}
+          title="Active Resume"
+        >
+          {activeResume ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                padding: '12px 16px',
+                borderRadius: 8,
+                background: 'var(--color-surface-hover)',
+              }}
+            >
+              <Space size={12}>
+                <FilePdfOutlined style={{ fontSize: 28, color: 'var(--color-primary)' }} />
                 <div>
-                  <p className="font-medium text-[var(--color-text)]">{activeResume.file_name}</p>
-                  <p className="text-xs text-[var(--color-text-tertiary)]">{(activeResume.file_size / 1024).toFixed(0)} KB</p>
+                  <Typography.Text strong>{activeResume.file_name}</Typography.Text>
+                  <Typography.Paragraph type="secondary" style={{ marginBottom: 0, fontSize: 12 }}>
+                    {(activeResume.file_size / 1024).toFixed(0)} KB
+                  </Typography.Paragraph>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <a href={activeResume.file_url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg hover:bg-[var(--color-surface)] text-[var(--color-text-secondary)] transition-colors">
-                  <FileDown className="w-4 h-4" />
-                </a>
-                <button onClick={() => deleteMutation.mutate(activeResume)} className="p-2 rounded-lg hover:bg-red-500/10 text-red-500 transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              </Space>
+              <Space size={0}>
+                <Button
+                  type="text"
+                  icon={<DownloadOutlined />}
+                  href={activeResume.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+                <DeleteButton onDelete={() => deleteMutation.mutateAsync(activeResume)} tooltip="Delete resume" />
+              </Space>
             </div>
-          </div>
-        )}
+          ) : (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No active resume yet" />
+          )}
+        </Card>
 
-        {resumes && resumes.data.length > 1 && (
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
-            <h2 className="text-lg font-semibold mb-4">Previous Versions</h2>
-            <div className="space-y-2">
-              {resumes.data.filter(r => !r.is_active).map((r) => (
-                <div key={r.id} className="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-hover)]">
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-[var(--color-text-tertiary)]" />
-                    <div>
-                      <p className="text-sm text-[var(--color-text)]">{r.file_name}</p>
-                      <p className="text-xs text-[var(--color-text-tertiary)]">{new Date(r.created_at).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => deleteMutation.mutate(r)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-red-500 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+        {previousVersions.length > 0 && (
+          <Card size="small" styles={{ body: { padding: 24 } }} title="Previous Versions">
+            <List
+              dataSource={previousVersions}
+              renderItem={(r) => (
+                <List.Item
+                  actions={[
+                    <Button
+                      key="download"
+                      type="text"
+                      icon={<DownloadOutlined />}
+                      href={r.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    />,
+                    <DeleteButton key="delete" onDelete={() => deleteMutation.mutateAsync(r)} />,
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={<FilePdfOutlined style={{ fontSize: 20, color: 'var(--color-text-tertiary)' }} />}
+                    title={<Typography.Text style={{ fontSize: 14 }}>{r.file_name}</Typography.Text>}
+                    description={
+                      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                        {new Date(r.created_at).toLocaleDateString()}
+                      </Typography.Text>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          </Card>
         )}
       </div>
     </div>

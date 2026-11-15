@@ -1,33 +1,19 @@
 import { portfolioService } from '@/portfolio/services/portfolio-service'
+import { cvLibraryService } from '@/shared/services/cv-library-service'
+import { buildCVData } from '@/shared/lib/cv-mapper'
+import type { CVData } from '@/shared/types/cv-data'
 
-export interface CVData {
-  name: string
-  title: string
-  email: string
-  location: string
-  phone: string
-  website: string
-  summary: string
-  skills: { category: string; technologies: string[] }[]
-  experience: {
-    year: string
-    title: string
-    subtitle: string
-    description: string
-    highlights: string[]
-  }[]
-  projects: {
-    title: string
-    summary: string
-    technologies: string[]
-  }[]
-  education: { year: string; title: string; institution: string; description: string }[]
-  certifications: { year: string; title: string; issuer: string; description: string }[]
-  languages: { language: string; level: string }[]
-  socialLinks: { label: string; url: string }[]
-}
+export type { CVData } from '@/shared/types/cv-data'
 
 export async function generateCVData(): Promise<CVData> {
+  try {
+    const entries = await cvLibraryService.publicEntries()
+    if (entries.length > 0) return buildCVData(entries)
+  } catch (error) {
+    const code = (error as { code?: string }).code
+    if (code !== 'PGRST205' && code !== '42P01') throw error
+  }
+
   const [hero, about, skills, projects, experience, education, certificates, socialLinks, timelineItems] = await Promise.all([
     portfolioService.getHero(),
     portfolioService.getAbout(),
@@ -55,34 +41,58 @@ export async function generateCVData(): Promise<CVData> {
     skills: skills.length > 0
       ? skills.map((s) => ({ category: s.title, technologies: [s.title] }))
       : [],
-    experience: (experience.length > 0 ? experience : allExperience).map((e) => ({
-      year: 'start_date' in e ? (e as any).start_date?.slice(0, 4) || e.year : e.year,
-      title: e.position || e.title,
-      subtitle: e.company || e.subtitle,
-      description: e.description,
-      highlights: ['Led technical strategy', 'Architected scalable solutions'],
-    })),
+    experience: experience.length > 0
+      ? experience.map((e) => ({
+          year: e.start_date?.slice(0, 4) || '',
+          title: e.position,
+          subtitle: e.company,
+          description: e.description,
+          highlights: [],
+        }))
+      : allExperience.map((e) => ({
+          year: e.year,
+          title: e.title,
+          subtitle: e.subtitle,
+          description: e.description,
+          highlights: [],
+        })),
     projects: projects.map((p) => ({
       title: p.title,
       summary: p.description || '',
       technologies: p.tech_stack || [],
     })),
-    education: (education.length > 0 ? education : allEducation).map((e) => ({
-      year: 'start_date' in e ? (e as any).start_date?.slice(0, 4) || e.year : e.year,
-      title: e.degree || e.title,
-      institution: e.university || e.subtitle,
-      description: e.description,
-    })),
-    certifications: (certificates.length > 0 ? certificates : allCertifications).map((c) => ({
-      year: 'issue_date' in c ? (c as any).issue_date?.slice(0, 4) || c.year : c.year,
-      title: c.title,
-      issuer: c.issuer || c.subtitle,
-      description: c.description,
-    })),
+    education: education.length > 0
+      ? education.map((e) => ({
+          year: e.start_date?.slice(0, 4) || '',
+          title: e.degree,
+          institution: e.university,
+          description: e.description,
+        }))
+      : allEducation.map((e) => ({
+          year: e.year,
+          title: e.title,
+          institution: e.subtitle,
+          description: e.description,
+        })),
+    certifications: certificates.length > 0
+      ? certificates.map((c) => ({
+          year: c.issue_date?.slice(0, 4) || '',
+          title: c.title,
+          issuer: c.issuer,
+          description: '',
+        }))
+      : allCertifications.map((c) => ({
+          year: c.year,
+          title: c.title,
+          issuer: c.subtitle,
+          description: c.description,
+        })),
     languages: (about?.languages || ['English', 'Arabic']).map((l: string) => ({
       language: l,
       level: 'Native',
     })),
     socialLinks: (socialLinks || []).map((l) => ({ label: l.platform, url: l.url })),
+    achievements: [],
+    references: [],
   }
 }

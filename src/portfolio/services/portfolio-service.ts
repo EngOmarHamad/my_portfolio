@@ -2,13 +2,13 @@ import { supabase } from '@/shared/lib/supabase'
 
 export const portfolioService = {
   async getHero() {
-    const { data, error } = await supabase.from('hero').select('*').limit(1).single()
+    const { data, error } = await supabase.from('hero').select('*').eq('is_published', true).limit(1).single()
     if (error && error.code !== 'PGRST116') throw error
     return data
   },
 
   async getAbout() {
-    const { data, error } = await supabase.from('about').select('*').limit(1).single()
+    const { data, error } = await supabase.from('about').select('*').eq('is_published', true).limit(1).single()
     if (error && error.code !== 'PGRST116') throw error
     return data
   },
@@ -28,6 +28,25 @@ export const portfolioService = {
       .from('projects')
       .select('*')
       .eq('status', 'published')
+      .order('display_order', { ascending: true })
+    if (error) throw error
+    return data ?? []
+  },
+
+  async getServices() {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('is_published', true)
+      .order('display_order', { ascending: true })
+    if (error) throw error
+    return data ?? []
+  },
+
+  async getGalleryImages() {
+    const { data, error } = await supabase
+      .from('gallery_images')
+      .select('*')
       .order('display_order', { ascending: true })
     if (error) throw error
     return data ?? []
@@ -148,13 +167,29 @@ export const portfolioService = {
   },
 
   async getTechStack() {
+    // Unified: tech_stack is now merged into skills (single source). Read from skills where category is Tools/DevOps or all if needed.
     const { data, error } = await supabase
-      .from('tech_stack')
-      .select('*')
+      .from('skills')
+      .select('id, title, icon, percentage, level, category_id, skill_categories!left(name, slug)')
       .eq('is_published', true)
       .order('display_order', { ascending: true })
     if (error) throw error
-    return data ?? []
+    // Map to TechStackItem shape for backward compatibility
+    const mapped = (data ?? []).map((row: Record<string, unknown>) => {
+      const cat = row.skill_categories as { name?: string } | null
+      return {
+        id: String(row.id ?? ''),
+        name: String(row.title ?? ''),
+        icon: String(row.icon ?? ''),
+        category: String(cat?.name ?? (row.level as string) ?? 'General'),
+        proficiency: Number(row.percentage ?? 0),
+        display_order: Number(row.display_order ?? 0),
+        is_published: true,
+        created_at: String(row.created_at ?? ''),
+        updated_at: String(row.updated_at ?? ''),
+      }
+    }) as import('@/admin/types').TechStackItem[]
+    return mapped
   },
 
   async getTimelineItems() {
@@ -168,7 +203,7 @@ export const portfolioService = {
   },
 
   async getContactInfo() {
-    const { data, error } = await supabase.from('contact_info').select('*').limit(1).single()
+    const { data, error } = await supabase.from('contact_info').select('*').eq('is_published', true).limit(1).single()
     if (error && error.code !== 'PGRST116') throw error
     return data
   },

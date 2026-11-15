@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Card, Col, Form, Input, Row, Switch, Typography } from 'antd'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
-import { Input, Textarea, Toggle } from '@/admin/components/ui/FormField'
 import { ImageUpload } from '@/admin/components/ui/ImageUpload'
-import { toast } from 'sonner'
+import { toast } from '@/shared/lib/toast'
 import type { Hero } from '@/admin/types'
 
 const heroService = createBaseService<Hero>('hero')
@@ -22,9 +22,7 @@ export function HeroPage() {
 
   const mutation = useMutation({
     mutationFn: (values: Partial<Hero>) =>
-      hero
-        ? heroService.update(hero.id, values)
-        : heroService.create(values),
+      hero ? heroService.update(hero.id, values) : heroService.create(values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hero'] })
       toast.success('Hero section updated')
@@ -39,123 +37,121 @@ export function HeroPage() {
       <PageHeader
         title="Hero Section"
         description="Manage your hero/landing section content"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Hero Section' }]}
       />
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          const form = new FormData(e.currentTarget)
-          mutation.mutate(Object.fromEntries(form) as unknown as Partial<Hero>)
+      <Form<Partial<Hero>>
+        layout="vertical"
+        onFinish={(values) => mutation.mutate(values)}
+        initialValues={{
+          name: hero?.name,
+          title: hero?.title,
+          short_description: hero?.short_description,
+          long_description: hero?.long_description,
+          location: hero?.location,
+          availability: hero?.availability,
+          resume_button_text: hero?.resume_button_text,
+          resume_button_url: hero?.resume_button_url,
         }}
-        className="max-w-3xl space-y-8"
+        style={{ maxWidth: 880 }}
       >
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-[var(--color-text)]">Main Content</h2>
+        <Card size="small" style={{ marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
+          <Typography.Title level={5} style={{ marginTop: 0 }}>
+            Main Content
+          </Typography.Title>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Name is required' }]}>
+                <Input placeholder="Your full name" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="title" label="Title" rules={[{ required: true, message: 'Title is required' }]}>
+                <Input placeholder="e.g. Full Stack Developer" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item name="short_description" label="Short Description">
+            <Input.TextArea rows={3} placeholder="Brief introduction" />
+          </Form.Item>
+          <Form.Item name="long_description" label="Long Description">
+            <Input.TextArea rows={5} placeholder="Detailed introduction" />
+          </Form.Item>
+        </Card>
 
-          <Input
-            label="Name"
-            name="name"
-            defaultValue={hero?.name}
-            required
-            placeholder="Your full name"
-          />
+        <Card size="small" style={{ marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
+          <Typography.Title level={5} style={{ marginTop: 0 }}>
+            Media
+          </Typography.Title>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item label="Avatar">
+                <ImageUpload
+                  value={hero?.avatar_url}
+                  onChange={(url) => mutation.mutate({ avatar_url: url })}
+                  bucket="avatars"
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Background Image">
+                <ImageUpload
+                  value={hero?.background_image_url}
+                  onChange={(url) => mutation.mutate({ background_image_url: url })}
+                  bucket="uploads"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Card>
 
-          <Input
-            label="Title"
-            name="title"
-            defaultValue={hero?.title}
-            required
-            placeholder="e.g. Full Stack Developer"
-          />
-
-          <Textarea
-            label="Short Description"
-            name="short_description"
-            defaultValue={hero?.short_description}
-            placeholder="Brief introduction"
-            rows={3}
-          />
-
-          <Textarea
-            label="Long Description"
-            name="long_description"
-            defaultValue={hero?.long_description}
-            placeholder="Detailed introduction"
-            rows={5}
-          />
-        </div>
-
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-[var(--color-text)]">Media</h2>
-
-          <div>
-            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">Avatar</label>
-            <ImageUpload
-              value={hero?.avatar_url}
-              onChange={(url) => mutation.mutate({ avatar_url: url })}
-              bucket="avatars"
-              aspectRatio="1/1"
-              className="max-w-[200px]"
+        <Card size="small" style={{ marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
+          <Typography.Title level={5} style={{ marginTop: 0 }}>
+            Details
+          </Typography.Title>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item name="location" label="Location">
+                <Input placeholder="e.g. San Francisco, CA" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="availability" label="Availability">
+                <Input placeholder="e.g. Available for work" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="resume_button_text" label="Resume Button Text">
+                <Input placeholder="Download CV" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="resume_button_url" label="Resume Button URL">
+                <Input placeholder="/cv" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div>
+              <Typography.Text>Published</Typography.Text>
+              <Typography.Paragraph type="secondary" style={{ marginBottom: 0, fontSize: 12 }}>
+                Show this section on the public site
+              </Typography.Paragraph>
+            </div>
+            <Switch
+              checked={hero?.is_published ?? true}
+              onChange={(checked) => mutation.mutate({ is_published: checked })}
+              loading={mutation.isPending}
             />
           </div>
+        </Card>
 
-          <div>
-            <label className="block text-sm font-medium text-[var(--color-text)] mb-2">Background Image</label>
-            <ImageUpload
-              value={hero?.background_image_url}
-              onChange={(url) => mutation.mutate({ background_image_url: url })}
-              bucket="uploads"
-            />
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button type="primary" htmlType="submit" loading={mutation.isPending}>
+            Save Changes
+          </Button>
         </div>
-
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-[var(--color-text)]">Details</h2>
-
-          <Input
-            label="Location"
-            name="location"
-            defaultValue={hero?.location}
-            placeholder="e.g. San Francisco, CA"
-          />
-
-          <Input
-            label="Availability"
-            name="availability"
-            defaultValue={hero?.availability}
-            placeholder="e.g. Available for work"
-          />
-
-          <Input
-            label="Resume Button Text"
-            name="resume_button_text"
-            defaultValue={hero?.resume_button_text}
-          />
-
-          <Input
-            label="Resume Button URL"
-            name="resume_button_url"
-            defaultValue={hero?.resume_button_url}
-            placeholder="/cv"
-          />
-
-          <Toggle
-            label="Published"
-            checked={hero?.is_published ?? true}
-            onChange={(checked) => mutation.mutate({ is_published: checked })}
-          />
-        </div>
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className="px-6 py-2.5 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)] disabled:opacity-50 transition-colors"
-          >
-            {mutation.isPending ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </form>
+      </Form>
     </div>
   )
 }

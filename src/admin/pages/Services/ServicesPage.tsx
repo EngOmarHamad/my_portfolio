@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Checkbox, Form, Input, InputNumber, Modal, Space, Tooltip, Typography } from 'antd'
+import { PlusOutlined, EditOutlined } from '@ant-design/icons'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
@@ -7,89 +9,193 @@ import { DataTable } from '@/admin/components/ui/DataTable'
 import { Pagination } from '@/admin/components/ui/Pagination'
 import { StatusBadge } from '@/admin/components/ui/StatusBadge'
 import { DeleteButton } from '@/admin/components/ui/DeleteButton'
-import { Input, Textarea, Toggle } from '@/admin/components/ui/FormField'
-import { toast } from 'sonner'
-import { Plus, Pencil } from 'lucide-react'
+import { toast } from '@/shared/lib/toast'
 import type { Service } from '@/admin/types'
 
 const serviceApi = createBaseService<Service>('services')
+
+interface ServiceFormValues {
+  title: string
+  icon: string
+  description: string
+  price: number | null
+  is_featured: boolean
+}
 
 export function ServicesPage() {
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<Service | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [form] = Form.useForm<ServiceFormValues>()
   const queryClient = useQueryClient()
   const pageSize = 10
 
-  const { data, isLoading } = useQuery({ queryKey: ['services', page], queryFn: () => serviceApi.list({ page, pageSize }) })
+  const { data, isLoading } = useQuery({
+    queryKey: ['services', page],
+    queryFn: () => serviceApi.list({ page, pageSize }),
+  })
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => serviceApi.remove(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['services'] }); toast.success('Service deleted') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services'] })
+      toast.success('Service deleted')
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to delete'),
   })
 
   const saveMutation = useMutation({
-    mutationFn: (values: Partial<Service>) => editing ? serviceApi.update(editing.id, values) : serviceApi.create(values),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['services'] }); toast.success(editing ? 'Service updated' : 'Service created'); setShowForm(false); setEditing(null) },
+    mutationFn: (values: ServiceFormValues) => {
+      const payload: Partial<Service> = { ...values }
+      if (!editing) payload.is_published = true
+      return editing ? serviceApi.update(editing.id, payload) : serviceApi.create(payload)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services'] })
+      toast.success(editing ? 'Service updated' : 'Service created')
+      setShowForm(false)
+      setEditing(null)
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to save'),
   })
+
+  const openForm = (service: Service | null) => {
+    setEditing(service)
+    setShowForm(true)
+    form.setFieldsValue({
+      title: service?.title ?? '',
+      icon: service?.icon ?? '',
+      description: service?.description ?? '',
+      price: service?.price ?? null,
+      is_featured: service?.is_featured ?? false,
+    })
+  }
 
   if (isLoading) return <PageSkeleton />
 
   const columns = [
-    { key: 'title', header: 'Service', render: (s: Service) => <div><p className="font-medium text-[var(--color-text)]">{s.icon} {s.title}</p><p className="text-xs text-[var(--color-text-tertiary)]">{s.description?.slice(0, 80)}</p></div> },
-    { key: 'price', header: 'Price', render: (s: Service) => s.price ? <span className="font-medium">${s.price}</span> : <span className="text-[var(--color-text-tertiary)]">-</span> },
-    { key: 'is_featured', header: 'Featured', render: (s: Service) => s.is_featured ? <StatusBadge status="active" /> : null },
-    { key: 'is_published', header: 'Status', render: (s: Service) => <StatusBadge status={s.is_published ? 'published' : 'draft'} /> },
-    { key: 'actions', header: '', render: (s: Service) => (
-      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => { setEditing(s); setShowForm(true) }} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)]"><Pencil className="w-4 h-4" /></button>
-        <DeleteButton onDelete={() => deleteMutation.mutateAsync(s.id)} />
-      </div>
-    )},
+    {
+      key: 'title',
+      header: 'Service',
+      render: (s: Service) => (
+        <div style={{ minWidth: 0 }}>
+          <Typography.Text strong ellipsis style={{ display: 'block', maxWidth: 320 }}>
+            {s.icon ? `${s.icon} ` : ''}
+            {s.title}
+          </Typography.Text>
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            {s.description?.slice(0, 80)}
+          </Typography.Text>
+        </div>
+      ),
+    },
+    {
+      key: 'price',
+      header: 'Price',
+      width: 100,
+      render: (s: Service) =>
+        s.price ? (
+          <Typography.Text strong>${s.price}</Typography.Text>
+        ) : (
+          <Typography.Text type="secondary">-</Typography.Text>
+        ),
+    },
+    {
+      key: 'is_featured',
+      header: 'Featured',
+      width: 100,
+      render: (s: Service) => (s.is_featured ? <StatusBadge status="active" /> : null),
+    },
+    {
+      key: 'is_published',
+      header: 'Status',
+      width: 110,
+      render: (s: Service) => <StatusBadge status={s.is_published ? 'published' : 'draft'} />,
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: 90,
+      render: (s: Service) => (
+        <Space size={0} onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Edit">
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => openForm(s)} />
+          </Tooltip>
+          <DeleteButton onDelete={() => deleteMutation.mutateAsync(s.id)} />
+        </Space>
+      ),
+    },
   ]
 
   return (
     <div>
-      <PageHeader title="Services" description="Manage your services" actions={
-        <button onClick={() => { setEditing(null); setShowForm(true) }} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)]"><Plus className="w-4 h-4" />Add Service</button>
-      } />
+      <PageHeader
+        title="Services"
+        description="Manage your services"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Services' }]}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openForm(null)}>
+            Add Service
+          </Button>
+        }
+      />
+
       <DataTable columns={columns} data={data?.data ?? []} keyExtractor={(s) => s.id} />
       {data && <Pagination page={page} pageSize={pageSize} total={data.count} onPageChange={setPage} />}
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowForm(false); setEditing(null) }} />
-          <div className="relative bg-[var(--color-surface)] rounded-2xl shadow-dialog border border-[var(--color-border)] p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold mb-6">{editing ? 'Edit Service' : 'Add Service'}</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              const form = new FormData(e.currentTarget)
-              saveMutation.mutate({
-                title: form.get('title') as string,
-                icon: form.get('icon') as string,
-                description: form.get('description') as string,
-                price: form.get('price') ? Number(form.get('price')) : null,
-                is_featured: form.get('is_featured') === 'on',
-                is_published: true,
-              })
-            }} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Title" name="title" defaultValue={editing?.title} required />
-                <Input label="Icon (emoji)" name="icon" defaultValue={editing?.icon} />
-              </div>
-              <Textarea label="Description" name="description" defaultValue={editing?.description} rows={4} />
-              <Input label="Price (optional)" name="price" type="number" step="0.01" defaultValue={editing?.price?.toString() || ''} />
-              <label className="flex items-center gap-2"><input type="checkbox" name="is_featured" defaultChecked={editing?.is_featured} className="rounded" /><span className="text-sm">Featured</span></label>
-              <div className="flex justify-end gap-2 pt-4">
-                <button type="button" onClick={() => { setShowForm(false); setEditing(null) }} className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--color-border)]">Cancel</button>
-                <button type="submit" disabled={saveMutation.isPending} className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white disabled:opacity-50">{saveMutation.isPending ? 'Saving...' : 'Save'}</button>
-              </div>
-            </form>
+      <Modal
+        open={showForm}
+        onCancel={() => {
+          setShowForm(false)
+          setEditing(null)
+        }}
+        footer={null}
+        title={editing ? 'Edit Service' : 'Add Service'}
+        width={560}
+        destroyOnHidden forceRender
+      >
+        <Form<ServiceFormValues>
+          form={form}
+          layout="vertical"
+          onFinish={(values) => saveMutation.mutate(values)}
+          style={{ marginTop: 16 }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <Form.Item name="title" label="Title" rules={[{ required: true, message: 'Title is required' }]}>
+              <Input placeholder="Service title" />
+            </Form.Item>
+            <Form.Item name="icon" label="Icon (emoji)">
+              <Input placeholder="💻" />
+            </Form.Item>
           </div>
-        </div>
-      )}
+
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={4} placeholder="Describe this service" />
+          </Form.Item>
+
+          <Form.Item name="price" label="Price (optional)">
+            <InputNumber min={0} step={0.01} placeholder="0.00" style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item name="is_featured" valuePropName="checked" style={{ marginBottom: 0 }}>
+            <Checkbox>Featured</Checkbox>
+          </Form.Item>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
+            <Button
+              onClick={() => {
+                setShowForm(false)
+                setEditing(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>
+              Save
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   )
 }

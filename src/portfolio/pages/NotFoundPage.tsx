@@ -13,7 +13,7 @@ export function NotFoundPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h1 className="text-[8rem] sm:text-[10rem] font-serif font-normal leading-none tracking-[-0.04em]">
+            <h1 className="text-[8rem] sm:text-[10rem] font-display font-normal leading-none tracking-[-0.04em]">
               <span className="text-gradient">404</span>
             </h1>
           </motion.div>

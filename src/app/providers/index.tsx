@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'sonner'
+import { LanguageProvider } from '@/shared/i18n'
+import { ThemeProvider } from '@/shared/theme'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,19 +21,11 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        {children}
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: 'var(--color-surface)',
-              color: 'var(--color-text)',
-              border: '1px solid var(--color-border)',
-            },
-          }}
-        />
-      </BrowserRouter>
+      <LanguageProvider>
+        <BrowserRouter>
+          <ThemeProvider>{children}</ThemeProvider>
+        </BrowserRouter>
+      </LanguageProvider>
     </QueryClientProvider>
   )
 }

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Button, Form, Input, InputNumber, Modal, Select, Space, Tooltip, Typography } from 'antd'
+import { PlusOutlined, EditOutlined, FileTextOutlined } from '@ant-design/icons'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'
 import { PageSkeleton } from '@/admin/components/ui/LoadingSkeleton'
@@ -8,14 +10,21 @@ import { Pagination } from '@/admin/components/ui/Pagination'
 import { SearchInput } from '@/admin/components/ui/SearchInput'
 import { StatusBadge } from '@/admin/components/ui/StatusBadge'
 import { DeleteButton } from '@/admin/components/ui/DeleteButton'
-import { Input, Textarea, Select } from '@/admin/components/ui/FormField'
 import { ImageUpload } from '@/admin/components/ui/ImageUpload'
+import { TagInput } from '@/admin/components/ui/TagInput'
 import { RichTextEditor } from '@/admin/components/ui/RichTextEditor'
-import { toast } from 'sonner'
-import { Plus, Pencil, FileText } from 'lucide-react'
+import { toast } from '@/shared/lib/toast'
 import type { BlogPost } from '@/admin/types'
 
 const blogService = createBaseService<BlogPost>('blog_posts')
+
+interface BlogFormValues {
+  title: string
+  slug: string
+  excerpt: string
+  reading_time: number
+  status: 'draft' | 'published' | 'archived'
+}
 
 export function BlogPage() {
   const [page, setPage] = useState(1)
@@ -23,6 +32,9 @@ export function BlogPage() {
   const [editing, setEditing] = useState<BlogPost | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [content, setContent] = useState('')
+  const [coverImageUrl, setCoverImageUrl] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [form] = Form.useForm<BlogFormValues>()
   const queryClient = useQueryClient()
   const pageSize = 10
 
@@ -35,82 +47,194 @@ export function BlogPage() {
   })
 
   const saveMutation = useMutation({
-    mutationFn: (values: Partial<BlogPost>) => editing ? blogService.update(editing.id, { ...values, content }) : blogService.create({ ...values, content }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['blog'] }); toast.success(editing ? 'Post updated' : 'Post created'); setShowForm(false); setEditing(null); setContent('') },
+    mutationFn: (values: BlogFormValues) =>
+      editing
+        ? blogService.update(editing.id, { ...values, content, cover_image_url: coverImageUrl, tags })
+        : blogService.create({ ...values, content, cover_image_url: coverImageUrl, tags }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blog'] })
+      toast.success(editing ? 'Post updated' : 'Post created')
+      setShowForm(false)
+      setEditing(null)
+      setContent('')
+      setCoverImageUrl('')
+      setTags([])
+    },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to save'),
   })
+
+  const openForm = (post: BlogPost | null) => {
+    setEditing(post)
+    setContent(post?.content ?? '')
+    setCoverImageUrl(post?.cover_image_url ?? '')
+    setTags(post?.tags ?? [])
+    setShowForm(true)
+    form.setFieldsValue({
+      title: post?.title ?? '',
+      slug: post?.slug ?? '',
+      excerpt: post?.excerpt ?? '',
+      reading_time: post?.reading_time ?? 5,
+      status: post?.status ?? 'draft',
+    })
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditing(null)
+    setContent('')
+    setCoverImageUrl('')
+    setTags([])
+  }
 
   if (isLoading) return <PageSkeleton />
 
   const columns = [
-    { key: 'title', header: 'Post', render: (p: BlogPost) => (
-      <div className="flex items-center gap-3">
-        {p.cover_image_url ? <img src={p.cover_image_url} alt="" className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--color-surface-hover)] flex items-center justify-center"><FileText className="w-4 h-4 text-[var(--color-text-tertiary)]" /></div>}
-        <div><p className="font-medium text-[var(--color-text)]">{p.title}</p><p className="text-xs text-[var(--color-text-tertiary)]">{p.reading_time} min read</p></div>
-      </div>
-    )},
-    { key: 'status', header: 'Status', render: (p: BlogPost) => <StatusBadge status={p.status} /> },
-    { key: 'date', header: 'Date', render: (p: BlogPost) => <span className="text-sm text-[var(--color-text-secondary)]">{new Date(p.created_at).toLocaleDateString()}</span> },
-    { key: 'actions', header: '', render: (p: BlogPost) => (
-      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => { setEditing(p); setContent(p.content); setShowForm(true) }} className="p-1.5 rounded-lg hover:bg-[var(--color-surface-hover)]"><Pencil className="w-4 h-4" /></button>
-        <DeleteButton onDelete={() => deleteMutation.mutateAsync(p.id)} />
-      </div>
-    )},
+    {
+      key: 'title',
+      header: 'Post',
+      render: (p: BlogPost) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {p.cover_image_url ? (
+            <img src={p.cover_image_url} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+          ) : (
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 8,
+                background: 'var(--color-surface-hover)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--color-text-tertiary)',
+              }}
+            >
+              <FileTextOutlined />
+            </div>
+          )}
+          <div style={{ minWidth: 0 }}>
+            <Typography.Text strong ellipsis style={{ display: 'block', maxWidth: 320 }}>
+              {p.title}
+            </Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {p.reading_time} min read
+            </Typography.Text>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: 110,
+      render: (p: BlogPost) => <StatusBadge status={p.status} />,
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      width: 130,
+      render: (p: BlogPost) => (
+        <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+          {new Date(p.created_at).toLocaleDateString()}
+        </Typography.Text>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: 110,
+      render: (p: BlogPost) => (
+        <Space size={0} onClick={(e) => e.stopPropagation()}>
+          <Tooltip title="Edit">
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => openForm(p)} />
+          </Tooltip>
+          <DeleteButton onDelete={() => deleteMutation.mutateAsync(p.id)} />
+        </Space>
+      ),
+    },
   ]
 
   return (
     <div>
-      <PageHeader title="Blog" description="Manage blog posts" actions={
-        <button onClick={() => { setEditing(null); setContent(''); setShowForm(true) }} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-[var(--color-primary)] text-white"><Plus className="w-4 h-4" />New Post</button>
-      } />
-      <div className="mb-4 max-w-sm"><SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder="Search posts..." /></div>
+      <PageHeader
+        title="Blog"
+        description="Manage blog posts"
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Blog' }]}
+        actions={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openForm(null)}>
+            New Post
+          </Button>
+        }
+      />
+
+      <div style={{ marginBottom: 16 }}>
+        <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder="Search posts..." />
+      </div>
+
       <DataTable columns={columns} data={data?.data ?? []} keyExtractor={(p) => p.id} />
+
       {data && <Pagination page={page} pageSize={pageSize} total={data.count} onPageChange={setPage} />}
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto py-10">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowForm(false); setEditing(null) }} />
-          <div className="relative bg-[var(--color-surface)] rounded-2xl shadow-dialog border border-[var(--color-border)] p-6 w-full max-w-3xl mx-4">
-            <h3 className="text-lg font-semibold mb-6">{editing ? 'Edit Post' : 'New Post'}</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              const form = new FormData(e.currentTarget)
-              saveMutation.mutate({
-                title: form.get('title') as string,
-                slug: form.get('slug') as string,
-                excerpt: form.get('excerpt') as string,
-                tags: ((form.get('tags') as string) || '').split(',').map(s => s.trim()).filter(Boolean),
-                reading_time: Number(form.get('reading_time')) || 0,
-                status: (form.get('status') as 'draft' | 'published') || 'draft',
-              })
-            }} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Title" name="title" defaultValue={editing?.title} required />
-                <Input label="Slug" name="slug" defaultValue={editing?.slug} required />
-              </div>
-              <Textarea label="Excerpt" name="excerpt" defaultValue={editing?.excerpt} rows={2} />
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Tags (comma separated)" name="tags" defaultValue={editing?.tags?.join(', ')} />
-                <Input label="Reading Time (min)" name="reading_time" type="number" defaultValue={editing?.reading_time?.toString() || '5'} />
-              </div>
-              <Select label="Status" name="status" defaultValue={editing?.status || 'draft'} options={[{ value: 'draft', label: 'Draft' }, { value: 'published', label: 'Published' }, { value: 'archived', label: 'Archived' }]} />
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Cover Image</label>
-                <ImageUpload value={editing?.cover_image_url} onChange={(url) => setEditing(prev => prev ? { ...prev, cover_image_url: url } : prev)} bucket="blog" aspectRatio="16/9" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Content (Markdown)</label>
-                <RichTextEditor value={content} onChange={setContent} />
-              </div>
-              <div className="flex justify-end gap-2 pt-4 border-t border-[var(--color-border)]">
-                <button type="button" onClick={() => { setShowForm(false); setEditing(null); setContent('') }} className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--color-border)]">Cancel</button>
-                <button type="submit" disabled={saveMutation.isPending} className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white disabled:opacity-50">{saveMutation.isPending ? 'Saving...' : 'Save'}</button>
-              </div>
-            </form>
+      <Modal
+        open={showForm}
+        onCancel={closeForm}
+        footer={null}
+        title={editing ? 'Edit Post' : 'New Post'}
+        width={720}
+        destroyOnHidden forceRender
+      >
+        <Form<BlogFormValues>
+          form={form}
+          layout="vertical"
+          onFinish={(values) => saveMutation.mutate(values)}
+          style={{ marginTop: 16 }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <Form.Item name="title" label="Title" rules={[{ required: true, message: 'Title is required' }]}>
+              <Input placeholder="Post title" />
+            </Form.Item>
+            <Form.Item name="slug" label="Slug" rules={[{ required: true, message: 'Slug is required' }]}>
+              <Input placeholder="my-blog-post" />
+            </Form.Item>
           </div>
-        </div>
-      )}
+
+          <Form.Item name="excerpt" label="Excerpt">
+            <Input.TextArea rows={2} placeholder="Short summary shown in post lists" />
+          </Form.Item>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+            <Form.Item name="reading_time" label="Reading Time (min)">
+              <InputNumber min={0} style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="status" label="Status">
+              <Select
+                options={[
+                  { value: 'draft', label: 'Draft' },
+                  { value: 'published', label: 'Published' },
+                  { value: 'archived', label: 'Archived' },
+                ]}
+              />
+            </Form.Item>
+          </div>
+
+          <TagInput label="Tags" value={tags} onChange={setTags} placeholder="Type a tag and press Enter" />
+
+          <Form.Item label="Cover Image">
+            <ImageUpload value={coverImageUrl} onChange={setCoverImageUrl} bucket="blog" />
+          </Form.Item>
+
+          <Form.Item label="Content (Markdown)">
+            <RichTextEditor value={content} onChange={setContent} />
+          </Form.Item>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
+            <Button onClick={closeForm}>Cancel</Button>
+            <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>
+              {editing ? 'Save Changes' : 'Create Post'}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </div>
   )
 }
