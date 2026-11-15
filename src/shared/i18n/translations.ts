@@ -1,3 +1,5 @@
+import { siteAr, siteEn } from './site-strings'
+
 export type Language = 'en' | 'ar'
 
 const en = {
@@ -133,6 +135,7 @@ const en = {
     sending: 'Sending...',
     send: 'Send Message',
   },
+  site: siteEn,
 }
 
 export type Strings = typeof en
@@ -262,6 +265,7 @@ const ar: Strings = {
     sending: 'جارٍ الإرسال...',
     send: 'إرسال الرسالة',
   },
+  site: siteAr,
 }
 
 export const STRINGS: Record<Language, Strings> = { en, ar }

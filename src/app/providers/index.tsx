@@ -1,14 +1,15 @@
 import type { ReactNode } from 'react'
 import { BrowserRouter } from 'react-router-dom'
+import { MotionConfig } from 'framer-motion'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LanguageProvider } from '@/shared/i18n'
-import { ThemeProvider } from '@/shared/theme'
+import { BackendUnavailableError } from '@/portfolio/services/portfolio-service'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60,
-      retry: 1,
+      retry: (failureCount, error) => !(error instanceof BackendUnavailableError) && failureCount < 1,
       refetchOnWindowFocus: false,
     },
   },
@@ -23,7 +24,8 @@ export function Providers({ children }: ProvidersProps) {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <BrowserRouter>
-          <ThemeProvider>{children}</ThemeProvider>
+          {/* Honour the OS reduced-motion preference everywhere. */}
+          <MotionConfig reducedMotion="user">{children}</MotionConfig>
         </BrowserRouter>
       </LanguageProvider>
     </QueryClientProvider>

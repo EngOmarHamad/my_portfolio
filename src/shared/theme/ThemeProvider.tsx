@@ -1,14 +1,13 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { App, ConfigProvider, theme as antdTheme } from 'antd'
-import { MotionConfig } from 'framer-motion'
 import type { ThemeConfig } from 'antd'
 import enUS from 'antd/locale/en_US'
 import arEG from 'antd/locale/ar_EG'
 import { useLanguage } from '@/shared/i18n'
 import { useTheme } from '@/portfolio/hooks/useTheme'
 import { bindMessageApi } from '@/shared/lib/toast'
-import { BRAND, FONT_SANS, FUNCTIONAL, palette } from './tokens'
+import { BRAND, FONT_SANS, palette } from './tokens'
 
 function buildThemeConfig(isDark: boolean): ThemeConfig {
   const p = isDark ? palette.dark : palette.light
@@ -214,8 +213,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     >
       <App>
         <ToastBridge />
-        {/* Force full animations regardless of OS reduce-motion settings */}
-        <MotionConfig reducedMotion="never">{children}</MotionConfig>
+        {children}
       </App>
     </ConfigProvider>
   )

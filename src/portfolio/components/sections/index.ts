@@ -1,5 +1,0 @@
-export { Hero } from './Hero'
-export { FeaturedProjects } from './FeaturedProjects'
-export { SkillsSection } from './SkillsSection'
-export { Metrics } from './Metrics'
-export { ArchitectureBlueprint } from './ArchitectureBlueprint'

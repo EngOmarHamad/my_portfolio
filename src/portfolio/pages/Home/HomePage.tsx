@@ -1,22 +1,16 @@
-import { PageTransition } from '@/portfolio/components/layout/PageTransition'
-import { Hero } from '@/portfolio/components/sections/Hero'
-import { Metrics } from '@/portfolio/components/sections/Metrics'
-import { FeaturedProjects } from '@/portfolio/components/sections/FeaturedProjects'
-import { ArchitectureBlueprint } from '@/portfolio/components/sections/ArchitectureBlueprint'
-import { SkillsSection } from '@/portfolio/components/sections/SkillsSection'
-import { ContactSection } from '@/portfolio/components/sections/ContactSection'
+import { lazy, Suspense } from 'react'
+import { Hero } from '@/portfolio/components/home/Hero'
 
+const HomeSections = lazy(() => import('./HomeSections'))
+
+/** The home narrative: who → what I build with → what I built → where → let's talk. */
 export function HomePage() {
   return (
-    <PageTransition>
-      <main>
-        <Hero />
-        <Metrics />
-        <FeaturedProjects />
-        <ArchitectureBlueprint />
-        <SkillsSection />
-        <ContactSection />
-      </main>
-    </PageTransition>
+    <>
+      <Hero />
+      <Suspense fallback={<div className="min-h-svh" aria-busy="true" />}>
+        <HomeSections />
+      </Suspense>
+    </>
   )
 }

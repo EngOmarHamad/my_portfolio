@@ -1,35 +1,41 @@
-import { Link } from 'react-router-dom'
-import { ArrowUpRight, BriefcaseBusiness } from 'lucide-react'
-import { PageTransition } from '@/portfolio/components/layout/PageTransition'
-import { Section, SectionHeader } from '@/portfolio/components/ui/Section'
+import { ArrowUpRight } from 'lucide-react'
+import { useLanguage } from '@/shared/i18n'
+import { Button, Reveal, SpotlightCard } from '@/portfolio/components/ds'
 import { useServices } from '@/portfolio/hooks/use-portfolio-data'
+import { PageShell, StatusMessage } from '../PageShell'
 
 export function ServicesPage() {
+  const { t } = useLanguage()
+  const copy = t.site.pages.services
   const { data: services = [], isLoading, isError } = useServices()
 
   return (
-    <PageTransition>
-      <Section>
-        <SectionHeader title="Services" subtitle="Ways we can work together, from architecture to delivery." />
-        {isLoading && <p className="text-center text-text-secondary">Loading services…</p>}
-        {isError && <p role="alert" className="text-center text-text-secondary">Services could not be loaded. Please try again later.</p>}
-        {!isLoading && !isError && services.length === 0 && <p className="text-center text-text-secondary">Services will be listed here soon.</p>}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => (
-            <article key={service.id} className="flex h-full flex-col rounded-xl border border-border bg-surface p-6">
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-                <BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <h2 className="text-xl text-text">{service.title}</h2>
-              <p className="mt-3 flex-1 text-sm leading-relaxed text-text-secondary">{service.description}</p>
-              {service.price != null && <p className="mt-5 border-t border-border pt-4 text-sm font-semibold text-text">From ${service.price}</p>}
-            </article>
-          ))}
-        </div>
-        <div className="mt-12 text-center">
-          <Link to="/contact" className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white hover:bg-primary-light">Discuss a project <ArrowUpRight className="h-4 w-4" /></Link>
-        </div>
-      </Section>
-    </PageTransition>
+    <PageShell id="services" index="S" label={copy.label} title={copy.title} intro={copy.intro}>
+      {isLoading && <StatusMessage role="status">{t.site.pages.loading}</StatusMessage>}
+      {isError && <StatusMessage role="alert">{t.site.pages.error}</StatusMessage>}
+      {!isLoading && !isError && services.length === 0 && <StatusMessage>{copy.empty}</StatusMessage>}
+      <ol className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {services.map((service, index) => (
+          <Reveal key={service.id} as="li" delay={index * 0.06}>
+            <SpotlightCard className="flex h-full flex-col p-8">
+              <span className="font-mono text-label text-signal-ink">{String(index + 1).padStart(2, '0')}</span>
+              <h2 className="mt-6 font-display text-h3 font-semibold text-ink">{service.title}</h2>
+              <p className="mt-4 flex-1 text-sm text-pretty text-ink-muted">{service.description}</p>
+              {service.price != null && (
+                <p className="mt-6 border-t border-line pt-4 font-mono text-label text-ink">
+                  {copy.from} ${service.price}
+                </p>
+              )}
+            </SpotlightCard>
+          </Reveal>
+        ))}
+      </ol>
+      <div className="mt-16">
+        <Button to="/#contact">
+          {copy.cta}
+          <ArrowUpRight className="size-4 rtl:-scale-x-100" aria-hidden />
+        </Button>
+      </div>
+    </PageShell>
   )
 }

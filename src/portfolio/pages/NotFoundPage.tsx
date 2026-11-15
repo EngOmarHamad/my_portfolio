@@ -1,44 +1,23 @@
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
-import { PageTransition } from '@/portfolio/components/layout/PageTransition'
+import { useLanguage } from '@/shared/i18n'
+import { Button, Container, RevealWords } from '@/portfolio/components/ds'
 
 export function NotFoundPage() {
+  const { t } = useLanguage()
+  const copy = t.site.notFound
   return (
-    <PageTransition>
-      <main className="min-h-screen flex items-center justify-center px-5">
-        <div className="text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <h1 className="text-[8rem] sm:text-[10rem] font-display font-normal leading-none tracking-[-0.04em]">
-              <span className="text-gradient">404</span>
-            </h1>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <h2 className="text-xl sm:text-2xl text-text mt-6 mb-3">
-              Page Not Found
-            </h2>
-            <p className="text-text-secondary mb-8 max-w-md mx-auto text-sm leading-relaxed">
-              The page you&apos;re looking for doesn&apos;t exist or has been moved.
-            </p>
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary-light transition-all duration-200 shadow-soft"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Link>
-          </motion.div>
-        </div>
-      </main>
-    </PageTransition>
+    <Container className="flex min-h-svh flex-col justify-center pt-(--nav-h)">
+      <p className="label-mono text-signal-ink">// {copy.code}</p>
+      <h1 className="mt-6 max-w-4xl font-display text-hero font-bold text-balance display-tight text-ink">
+        <RevealWords text={copy.title} play />
+      </h1>
+      <p className="mt-6 text-ink-muted">{copy.body}</p>
+      <div className="mt-12">
+        <Button to="/">
+          <ArrowLeft className="size-4 rtl:-scale-x-100" aria-hidden />
+          {copy.home}
+        </Button>
+      </div>
+    </Container>
   )
 }

@@ -7,7 +7,7 @@ export function ThemeToggle() {
 
   return (
     <motion.button
-      onClick={toggleTheme}
+      onClick={() => toggleTheme()}
       className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border/60 bg-surface/60 text-text-secondary backdrop-blur-md transition-all duration-200 hover:border-primary/40 hover:text-text hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Light mode' : 'Dark mode'}

@@ -54,7 +54,7 @@ export const RADIUS = {
 export const FONT_SANS =
   "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Kufi Arabic', sans-serif"
 export const FONT_DISPLAY =
-  "'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, 'Noto Kufi Arabic', sans-serif"
+  "'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, 'Noto Kufi Arabic', sans-serif"
 export const FONT_MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace"
 
 export interface PaletteMode {

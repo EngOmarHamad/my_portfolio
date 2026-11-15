@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button, Card, Empty, List, Space, Typography, Upload } from 'antd'
-import { UploadOutlined, DownloadOutlined, FilePdfOutlined, InboxOutlined } from '@ant-design/icons'
+import { DownloadOutlined, FilePdfOutlined, InboxOutlined } from '@ant-design/icons'
 import { createBaseService } from '@/admin/services/supabase-service'
 import { uploadService } from '@/admin/services/upload-service'
 import { PageHeader } from '@/admin/components/ui/PageHeader'

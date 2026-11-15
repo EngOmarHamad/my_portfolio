@@ -11,18 +11,16 @@ export default defineConfig({
     },
   },
   build: {
-    chunkSizeWarningLimit: 600,
+    // The admin CV builder ships a large PDF engine in its own lazy chunk.
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: {
+        // Only long-lived vendor groups are pinned; everything else (PDF tooling,
+        // antd, editors) is split automatically along the lazy route boundaries.
         manualChunks: (id: string) => {
           if (!id.includes('node_modules')) return undefined
-          if (id.includes('react-pdf') || id.includes('@react-pdf') || id.includes('jspdf') || id.includes('html2pdf')) return 'pdf'
-          if (id.includes('recharts')) return 'charts'
-          if (id.includes('@supabase')) return 'supabase'
-          if (id.includes('@tanstack')) return 'query'
-          if (id.includes('framer-motion')) return 'motion'
-          if (id.includes('lucide-react') || id.includes('react-icons')) return 'icons'
-          if (/node_modules\/(react|react-dom|react-router-dom|scheduler)\//.test(id)) return 'react'
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) return 'react'
+          if (/node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(id)) return 'motion'
           return undefined
         },
       },

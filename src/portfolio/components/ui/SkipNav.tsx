@@ -1,17 +1,13 @@
-import { cn } from '@/shared/utils/cn'
+import { useLanguage } from '@/shared/i18n'
 
 export function SkipNav() {
+  const { t } = useLanguage()
   return (
     <a
       href="#main-content"
-      className={cn(
-        'fixed top-2 left-2 z-[100] px-4 py-2 text-sm font-medium rounded-lg',
-        'bg-surface text-text border border-border shadow-elevated',
-        '-translate-y-20 focus:translate-y-0 transition-transform duration-200',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
-      )}
+      className="fixed start-4 top-4 z-[200] -translate-y-24 rounded-chip bg-signal px-5 py-3 text-sm font-medium text-on-signal transition-transform duration-200 focus:translate-y-0"
     >
-      Skip to main content
+      {t.site.nav.skip}
     </a>
   )
 }

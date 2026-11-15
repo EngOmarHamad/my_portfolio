@@ -5,7 +5,7 @@ interface LoadingSkeletonProps {
   cols?: number
 }
 
-export function LoadingSkeleton({ rows = 3, cols = 4 }: LoadingSkeletonProps) {
+export function LoadingSkeleton({ rows = 3, cols: _cols = 4 }: LoadingSkeletonProps) {
   return (
     <div style={{ padding: '8px 4px' }}>
       <Skeleton active paragraph={{ rows }} title={{ width: '35%' }} />
