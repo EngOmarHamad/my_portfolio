@@ -50,6 +50,7 @@ export function ProjectGrid({ projects, onOpen }: { projects: ProjectVM[]; onOpe
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ duration: DURATION.base, ease: EASE }}
+              className="min-w-0"
             >
               <ProjectCard project={project} index={index} onOpen={onOpen} />
             </motion.li>

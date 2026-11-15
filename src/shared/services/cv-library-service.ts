@@ -1,8 +1,10 @@
-import { supabase } from '@/shared/lib/supabase'
+import { isSupabaseConfigured, supabase } from '@/shared/lib/supabase'
 import type { CVEntry, CVProfile, CVProfileEntry } from '@/shared/types/cv-library'
 
 export const cvLibraryService = {
   async publicEntries(): Promise<CVEntry[]> {
+    // Without a backend the CV falls back to its bundled defaults.
+    if (!isSupabaseConfigured) return []
     const { data, error } = await supabase.from('cv_entries').select('*').eq('is_public', true).order('display_order')
     if (error) throw error
     return (data ?? []) as CVEntry[]

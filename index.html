@@ -29,8 +29,6 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
-    <link rel="preload" href="/fonts/space-grotesk-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
 
     <script type="application/ld+json">
       {
@@ -60,6 +58,14 @@
         } catch (e) {}
         var p = location.pathname
         var skip = p.indexOf('/admin') === 0 || p === '/cv'
+        // Critical fonts for the public site only (the CV and admin use their own faces).
+        if (!skip) {
+          ;['space-grotesk-latin-700-normal', 'inter-latin-400-normal'].forEach(function (f) {
+            var l = document.createElement('link')
+            l.rel = 'preload'; l.as = 'font'; l.type = 'font/woff2'; l.crossOrigin = 'anonymous'; l.href = '/fonts/' + f + '.woff2'
+            document.head.appendChild(l)
+          })
+        }
         try {
           if (matchMedia('(prefers-reduced-motion: reduce)').matches || sessionStorage.getItem('oh:intro')) skip = true
           if (!skip) sessionStorage.setItem('oh:intro', '1')
