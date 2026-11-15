@@ -1,57 +1,43 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Routes, Route, useLocation } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { RootLayout } from '@/app/layouts/RootLayout'
+import { HomePage } from '@/portfolio/pages/Home'
 
-const HomePage = lazy(() => import('@/portfolio/pages/Home').then((m) => ({ default: m.HomePage })))
-const ProjectsPage = lazy(() => import('@/portfolio/pages/Projects').then((m) => ({ default: m.ProjectsPage })))
+const WorkPage = lazy(() => import('@/portfolio/pages/Projects').then((m) => ({ default: m.ProjectsPage })))
+const CaseStudyPage = lazy(() => import('@/portfolio/pages/Projects').then((m) => ({ default: m.ProjectDetailPage })))
 const ServicesPage = lazy(() => import('@/portfolio/pages/Services/ServicesPage').then((m) => ({ default: m.ServicesPage })))
 const GalleryPage = lazy(() => import('@/portfolio/pages/Gallery/GalleryPage').then((m) => ({ default: m.GalleryPage })))
-const ProjectDetailPage = lazy(() => import('@/portfolio/pages/Projects').then((m) => ({ default: m.ProjectDetailPage })))
-const AboutPage = lazy(() => import('@/portfolio/pages/About').then((m) => ({ default: m.AboutPage })))
 const BlogPage = lazy(() => import('@/portfolio/pages/Blog').then((m) => ({ default: m.BlogPage })))
-const SkillsPage = lazy(() => import('@/portfolio/pages/Skills').then((m) => ({ default: m.SkillsPage })))
-const ExperiencePage = lazy(() => import('@/portfolio/pages/Experience').then((m) => ({ default: m.ExperiencePage })))
-const ContactPage = lazy(() => import('@/portfolio/pages/Contact').then((m) => ({ default: m.ContactPage })))
 const CVPage = lazy(() => import('@/portfolio/pages/CV').then((m) => ({ default: m.CVPage })))
 const NotFoundPage = lazy(() => import('@/portfolio/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
 
-function PageLoader() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        <p className="text-sm text-text-tertiary">Loading...</p>
-      </div>
-    </div>
-  )
-}
+/** Reserves the viewport while a route chunk loads, so nothing shifts. */
+const PageFallback = () => <div className="min-h-svh" aria-busy="true" />
+
+/** Former standalone pages now live as sections of the home narrative. */
+const toSection = (id: string) => <Navigate to={{ pathname: '/', hash: `#${id}` }} replace />
 
 export function AppRouter() {
-  const location = useLocation()
-
   return (
-    <AnimatePresence mode="wait">
-      <Suspense fallback={<PageLoader />}>
-        <Routes location={location} key={location.pathname}>
-          <Route element={<RootLayout />}>
-            <Route index element={<HomePage />} />
-            <Route path="projects" element={<ProjectsPage />} />
-            <Route path="services" element={<ServicesPage />} />
-            <Route path="gallery" element={<GalleryPage />} />
-            <Route path="projects/:id" element={<ProjectDetailPage />} />
-            <Route path="about" element={<AboutPage />} />
-            <Route path="skills" element={<SkillsPage />} />
-            <Route path="experience" element={<ExperiencePage />} />
-            <Route path="blog" element={<BlogPage />} />
-            <Route path="blog/:slug" element={<BlogPage />} />
-            <Route path="contact" element={<ContactPage />} />
-            <Route path="cv-form" element={<Navigate to="/cv" replace />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-          <Route path="cv" element={<CVPage />} />
-        </Routes>
-      </Suspense>
-    </AnimatePresence>
+    <Suspense fallback={<PageFallback />}>
+      <Routes>
+        <Route element={<RootLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="projects" element={<WorkPage />} />
+          <Route path="projects/:id" element={<CaseStudyPage />} />
+          <Route path="services" element={<ServicesPage />} />
+          <Route path="gallery" element={<GalleryPage />} />
+          <Route path="blog" element={<BlogPage />} />
+          <Route path="blog/:slug" element={<BlogPage />} />
+          <Route path="about" element={toSection('about')} />
+          <Route path="skills" element={toSection('skills')} />
+          <Route path="experience" element={toSection('experience')} />
+          <Route path="contact" element={toSection('contact')} />
+          <Route path="cv-form" element={<Navigate to="/cv" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+        <Route path="cv" element={<CVPage />} />
+      </Routes>
+    </Suspense>
   )
 }

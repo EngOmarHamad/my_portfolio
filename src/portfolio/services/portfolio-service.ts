@@ -1,19 +1,36 @@
-import { supabase } from '@/shared/lib/supabase'
+// The client is loaded on demand so the 50 KB SDK never blocks first render.
+const isSupabaseConfigured = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY)
+const loadClient = () => import('@/shared/lib/supabase').then((module) => module.supabase)
+
+export class BackendUnavailableError extends Error {
+  constructor() {
+    super('CMS backend is not configured')
+    this.name = 'BackendUnavailableError'
+  }
+}
+
+async function client() {
+  if (!isSupabaseConfigured) throw new BackendUnavailableError()
+  return loadClient()
+}
 
 export const portfolioService = {
   async getHero() {
+    const supabase = await client()
     const { data, error } = await supabase.from('hero').select('*').eq('is_published', true).limit(1).single()
     if (error && error.code !== 'PGRST116') throw error
     return data
   },
 
   async getAbout() {
+    const supabase = await client()
     const { data, error } = await supabase.from('about').select('*').eq('is_published', true).limit(1).single()
     if (error && error.code !== 'PGRST116') throw error
     return data
   },
 
   async getSkills() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('skills')
       .select('*')
@@ -24,6 +41,7 @@ export const portfolioService = {
   },
 
   async getProjects() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('projects')
       .select('*')
@@ -34,6 +52,7 @@ export const portfolioService = {
   },
 
   async getServices() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('services')
       .select('*')
@@ -44,6 +63,7 @@ export const portfolioService = {
   },
 
   async getGalleryImages() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('gallery_images')
       .select('*')
@@ -53,6 +73,7 @@ export const portfolioService = {
   },
 
   async getProjectBySlug(slug: string) {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('projects')
       .select('*')
@@ -64,6 +85,7 @@ export const portfolioService = {
   },
 
   async getProjectById(id: string) {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('projects')
       .select('*')
@@ -75,6 +97,7 @@ export const portfolioService = {
   },
 
   async getCategories() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('projects')
       .select('category')
@@ -86,6 +109,7 @@ export const portfolioService = {
   },
 
   async getExperience() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('experience')
       .select('*')
@@ -96,6 +120,7 @@ export const portfolioService = {
   },
 
   async getEducation() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('education')
       .select('*')
@@ -106,6 +131,7 @@ export const portfolioService = {
   },
 
   async getCertificates() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('certificates')
       .select('*')
@@ -116,6 +142,7 @@ export const portfolioService = {
   },
 
   async getTestimonials() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('testimonials')
       .select('*')
@@ -126,6 +153,7 @@ export const portfolioService = {
   },
 
   async getAchievements() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('achievements')
       .select('*')
@@ -136,6 +164,7 @@ export const portfolioService = {
   },
 
   async getBlogPosts() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('blog_posts')
       .select('*')
@@ -146,6 +175,7 @@ export const portfolioService = {
   },
 
   async getBlogPostBySlug(slug: string) {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('blog_posts')
       .select('*')
@@ -157,6 +187,7 @@ export const portfolioService = {
   },
 
   async getSocialLinks() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('social_links')
       .select('*')
@@ -167,6 +198,7 @@ export const portfolioService = {
   },
 
   async getTechStack() {
+    const supabase = await client()
     // Unified: tech_stack is now merged into skills (single source). Read from skills where category is Tools/DevOps or all if needed.
     const { data, error } = await supabase
       .from('skills')
@@ -193,6 +225,7 @@ export const portfolioService = {
   },
 
   async getTimelineItems() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('timeline_items')
       .select('*')
@@ -203,29 +236,34 @@ export const portfolioService = {
   },
 
   async getContactInfo() {
+    const supabase = await client()
     const { data, error } = await supabase.from('contact_info').select('*').eq('is_published', true).limit(1).single()
     if (error && error.code !== 'PGRST116') throw error
     return data
   },
 
   async getSEO() {
+    const supabase = await client()
     const { data, error } = await supabase.from('seo').select('*').limit(1).single()
     if (error && error.code !== 'PGRST116') throw error
     return data
   },
 
   async getSettings() {
+    const supabase = await client()
     const { data, error } = await supabase.from('settings').select('*').limit(1).single()
     if (error && error.code !== 'PGRST116') throw error
     return data
   },
 
   async submitContact(message: { name: string; email: string; subject: string; message: string }) {
+    const supabase = await client()
     const { error } = await supabase.from('contact_messages').insert(message)
     if (error) throw error
   },
 
   async getActiveResume() {
+    const supabase = await client()
     const { data, error } = await supabase
       .from('resume')
       .select('*')

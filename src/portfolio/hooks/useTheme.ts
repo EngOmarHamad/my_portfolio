@@ -1,111 +1,111 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from 'react'
 
-type Theme = "light" | "dark";
+export type Theme = 'light' | 'dark'
 
-function getSystemTheme(): Theme {
-  if (typeof window === "undefined") return "dark"; // افتراضي دارك
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-}
+const STORAGE_KEY = 'theme'
+const listeners = new Set<() => void>()
 
-function getStoredTheme(): Theme | null {
+function readStoredTheme(): Theme | null {
   try {
-    const stored = localStorage.getItem("theme");
-    if (stored === "light" || stored === "dark") return stored;
-  } catch {}
-  return null;
-}
-
-function getTheme(): Theme {
-  return getStoredTheme() ?? getSystemTheme();
-}
-
-let currentTheme = getTheme();
-const listeners = new Set<() => void>();
-
-function applyTheme(theme: Theme) {
-  const html = document.documentElement;
-
-  // إزالة جميع الكلاسات
-  html.classList.remove("light", "dark");
-
-  // إضافة الكلاس المناسب
-  if (theme === "dark") {
-    html.classList.add("dark");
-    html.classList.remove("light");
-  } else {
-    html.classList.add("light");
-    html.classList.remove("dark");
+    const stored = localStorage.getItem(STORAGE_KEY)
+    return stored === 'light' || stored === 'dark' ? stored : null
+  } catch {
+    return null
   }
 }
 
-function setTheme(theme: Theme) {
-  currentTheme = theme;
-  try {
-    localStorage.setItem("theme", theme);
-  } catch {}
-  applyTheme(theme);
-  listeners.forEach((l) => l());
+function systemTheme(): Theme {
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+}
+
+function applyTheme(theme: Theme) {
+  const root = document.documentElement
+  root.classList.remove('light', 'dark')
+  root.classList.add(theme)
+}
+
+// index.html already applied the class before first paint; mirror it here.
+let currentTheme: Theme =
+  typeof window === 'undefined' ? 'dark' : (readStoredTheme() ?? systemTheme())
+
+function commit(theme: Theme, persist: boolean) {
+  currentTheme = theme
+  if (persist) {
+    try {
+      localStorage.setItem(STORAGE_KEY, theme)
+    } catch {
+      /* storage unavailable */
+    }
+  }
+  applyTheme(theme)
+  listeners.forEach((listener) => listener())
+}
+
+if (typeof window !== 'undefined') {
+  applyTheme(currentTheme)
+  window
+    .matchMedia('(prefers-color-scheme: light)')
+    .addEventListener('change', (event) => {
+      if (!readStoredTheme()) commit(event.matches ? 'light' : 'dark', false)
+    })
+}
+
+interface RevealOrigin {
+  x: number
+  y: number
+}
+
+/**
+ * Switches theme with a circular reveal from `origin` when the browser supports
+ * View Transitions and the user allows motion; otherwise switches instantly.
+ */
+function transitionTo(theme: Theme, origin?: RevealOrigin) {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (!document.startViewTransition || reduced || !origin) {
+    commit(theme, true)
+    return
+  }
+
+  const radius = Math.hypot(
+    Math.max(origin.x, window.innerWidth - origin.x),
+    Math.max(origin.y, window.innerHeight - origin.y),
+  )
+  const transition = document.startViewTransition(() => commit(theme, true))
+  transition.ready
+    .then(() => {
+      document.documentElement.animate(
+        {
+          clipPath: [
+            `circle(0px at ${origin.x}px ${origin.y}px)`,
+            `circle(${radius}px at ${origin.x}px ${origin.y}px)`,
+          ],
+        },
+        { duration: 500, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', pseudoElement: '::view-transition-new(root)' },
+      )
+    })
+    .catch(() => {
+      /* transition skipped */
+    })
 }
 
 function subscribe(callback: () => void) {
-  listeners.add(callback);
-  return () => listeners.delete(callback);
+  listeners.add(callback)
+  return () => {
+    listeners.delete(callback)
+  }
 }
 
-function getSnapshot() {
-  return currentTheme;
-}
+const getSnapshot = () => currentTheme
+const getServerSnapshot = (): Theme => 'dark'
 
 export function useTheme() {
-  const theme = useSyncExternalStore(subscribe, getSnapshot);
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
-  const toggleTheme = useCallback(() => {
-    setTheme(theme === "light" ? "dark" : "light");
-  }, [theme]);
+  const toggleTheme = useCallback(
+    (origin?: RevealOrigin) => transitionTo(theme === 'light' ? 'dark' : 'light', origin),
+    [theme],
+  )
+  const setTheme = useCallback((next: Theme) => commit(next, true), [])
 
-  const setThemeValue = useCallback((t: Theme) => {
-    setTheme(t);
-  }, []);
-
-  return {
-    theme,
-    toggleTheme,
-    setTheme: setThemeValue,
-    isDark: theme === "dark",
-  };
-}
-
-// ============================================
-// INITIALIZATION - يتم تشغيلها مرة واحدة
-// ============================================
-if (typeof window !== "undefined") {
-  // 1. التحقق من التخزين المحلي
-  const stored = getStoredTheme();
-
-  if (stored) {
-    // 2. إذا كان هناك ثيم مخزن، استخدمه
-    setTheme(stored);
-  } else {
-    // 3. وإلا استخدم تفضيل النظام
-    setTheme(getSystemTheme());
-  }
-
-  // 4. الاستماع لتغيرات تفضيل النظام
-  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-  const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-    // فقط غير إذا لم يكن هناك ثيم مخزن
-    if (!getStoredTheme()) {
-      setTheme(e.matches ? "dark" : "light");
-    }
-  };
-
-  mediaQuery.addEventListener("change", handleSystemThemeChange);
-
-  // 5. التنظيف عند إغلاق الصفحة
-  window.addEventListener("beforeunload", () => {
-    mediaQuery.removeEventListener("change", handleSystemThemeChange);
-  });
+  return { theme, toggleTheme, setTheme, isDark: theme === 'dark' }
 }

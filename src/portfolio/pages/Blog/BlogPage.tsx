@@ -1,107 +1,121 @@
-import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Search, FileText } from 'lucide-react'
-import { PageTransition } from '@/portfolio/components/layout/PageTransition'
-import { Section, SectionHeader } from '@/portfolio/components/ui/Section'
-import { BlogCard } from '@/portfolio/components/cards/BlogCard'
-import { Reveal } from '@/portfolio/components/animations/Reveal'
-import { useBlogPosts } from '@/portfolio/hooks/use-portfolio-data'
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { AnimatePresence, m } from 'framer-motion'
+import { ArrowUpRight, Search } from 'lucide-react'
+import { useLanguage } from '@/shared/i18n'
 import { cn } from '@/shared/utils/cn'
+import { SpotlightCard, Tag } from '@/portfolio/components/ds'
+import { useBlogPosts } from '@/portfolio/hooks/use-portfolio-data'
+import { DURATION, EASE, transition } from '@/portfolio/lib/motion'
+import { PageShell, StatusMessage } from '../PageShell'
+
+const ALL = '__all__'
+
+interface Post {
+  id: string
+  title: string
+  slug: string
+  excerpt?: string
+  tags?: string[]
+  reading_time?: number
+  created_at?: string
+}
 
 export function BlogPage() {
-  const [activeTag, setActiveTag] = useState('All')
-  const [searchQuery, setSearchQuery] = useState('')
-  const { data: posts = [] } = useBlogPosts()
+  const { t, lang } = useLanguage()
+  const copy = t.site.pages.blog
+  const { data = [], isLoading, isError } = useBlogPosts()
+  const posts = data as Post[]
+  const [tag, setTag] = useState(ALL)
+  const [query, setQuery] = useState('')
 
-  const allTags = useMemo(() => {
-    const tags = new Set<string>()
-    posts.forEach((post) => (post.tags ?? []).forEach((t: string) => tags.add(t)))
-    return ['All', ...Array.from(tags)]
-  }, [posts])
-
+  const tags = useMemo(() => [...new Set(posts.flatMap((post) => post.tags ?? []))], [posts])
   const filtered = useMemo(() => {
-    return posts.filter((post) => {
-      const matchesTag = activeTag === 'All' || (post.tags ?? []).includes(activeTag)
-      const matchesSearch =
-        !searchQuery ||
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (post.excerpt ?? '').toLowerCase().includes(searchQuery.toLowerCase())
-      return matchesTag && matchesSearch
-    })
-  }, [activeTag, searchQuery, posts])
+    const needle = query.trim().toLowerCase()
+    return posts.filter(
+      (post) =>
+        (tag === ALL || (post.tags ?? []).includes(tag)) &&
+        (!needle || post.title.toLowerCase().includes(needle) || (post.excerpt ?? '').toLowerCase().includes(needle)),
+    )
+  }, [posts, tag, query])
+
+  const formatDate = (value?: string) =>
+    value ? new Intl.DateTimeFormat(lang === 'ar' ? 'ar' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value)) : ''
 
   return (
-    <PageTransition>
-      <main>
-        <Section variant="teal">
-          <SectionHeader
-            title="Blog"
-            subtitle="Thoughts on engineering, architecture, and building great software."
-            accent="primary"
-          />
-
-          <Reveal>
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
-                <input
-                  type="text"
-                  placeholder="Search articles..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-md border border-border/50 bg-bg pl-10 pr-4 py-2.5 text-sm text-text placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mb-8">
-              {allTags.map((tag, i) => {
-                const activeColors = ['bg-primary text-white', 'bg-accent text-white', 'bg-highlight text-white', 'bg-primary text-white']
-                const inactiveColors = ['bg-surface text-text-secondary hover:bg-primary/5 hover:text-primary border-primary/20', 'bg-surface text-text-secondary hover:bg-accent/5 hover:text-accent border-accent/20', 'bg-surface text-text-secondary hover:bg-highlight/5 hover:text-highlight border-highlight/20', 'bg-surface text-text-secondary hover:bg-primary/5 hover:text-primary border-primary/20']
-                return (
-                  <button
-                    key={tag}
-                    onClick={() => setActiveTag(tag)}
-                    className={cn(
-                      'rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 border',
-                      activeTag === tag
-                        ? activeColors[i % activeColors.length]
-                        : inactiveColors[i % inactiveColors.length],
-                    )}
-                  >
-                    {tag}
-                  </button>
-                )
-              })}
-            </div>
-          </Reveal>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTag + searchQuery}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5"
+    <PageShell id="blog" index="B" label={copy.label} title={copy.title} intro={copy.intro}>
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-wrap gap-1 border-b border-line">
+          {[ALL, ...tags].map((item) => (
+            <button
+              key={item}
+              type="button"
+              aria-pressed={tag === item}
+              onClick={() => setTag(item)}
+              className={cn('relative min-h-11 px-4 text-sm transition-colors', tag === item ? 'text-ink' : 'text-ink-muted hover:text-ink')}
             >
-              {filtered.map((post, i) => (
-                <BlogCard key={post.id} post={post} index={i} />
-              ))}
-            </motion.div>
-          </AnimatePresence>
+              {item === ALL ? copy.all : item}
+              {tag === item && <m.span layoutId="blog-filter" className="absolute inset-x-0 -bottom-px h-px bg-signal" transition={transition()} />}
+            </button>
+          ))}
+        </div>
+        <label className="relative block md:w-80">
+          <span className="sr-only">{copy.search}</span>
+          <Search className="pointer-events-none absolute start-4 top-1/2 size-4 -translate-y-1/2 text-ink-faint" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={copy.search}
+            className="h-12 w-full rounded-chip border border-line bg-panel ps-11 pe-4 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-signal"
+          />
+        </label>
+      </div>
 
-          {filtered.length === 0 && (
-            <div className="text-center py-24">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-surface border border-border/40 mb-5">
-                <FileText className="h-6 w-6 text-text-tertiary" />
-              </div>
-              <p className="text-base text-text-secondary">No articles found matching your criteria.</p>
-              <p className="text-sm text-text-tertiary mt-1.5">Try adjusting your search or filter.</p>
-            </div>
-          )}
-        </Section>
-      </main>
-    </PageTransition>
+      {isLoading && <StatusMessage role="status">{t.site.pages.loading}</StatusMessage>}
+      {isError && <StatusMessage role="alert">{t.site.pages.error}</StatusMessage>}
+      {!isLoading && !isError && filtered.length === 0 && <StatusMessage>{copy.empty}</StatusMessage>}
+
+      <m.ul layout className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {filtered.map((post) => (
+            <m.li
+              key={post.id}
+              layout
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: DURATION.base, ease: EASE }}
+            >
+              <SpotlightCard as="article" className="flex h-full flex-col p-6">
+                <p className="flex gap-4 font-mono text-label text-ink-faint">
+                  <span>{formatDate(post.created_at)}</span>
+                  <span>
+                    {post.reading_time || 5} {copy.minutes}
+                  </span>
+                </p>
+                <h2 className="mt-4 font-display text-h3 font-semibold text-ink">
+                  <Link to={`/blog/${post.slug}`} className="after:absolute after:inset-0">
+                    {post.title}
+                  </Link>
+                </h2>
+                {post.excerpt && <p className="mt-3 line-clamp-3 flex-1 text-sm text-ink-muted">{post.excerpt}</p>}
+                {(post.tags ?? []).length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {(post.tags ?? []).map((item) => (
+                      <Tag key={item}>{item}</Tag>
+                    ))}
+                  </div>
+                )}
+                <span className="mt-6 inline-flex items-center gap-2 text-sm text-signal-ink">
+                  {copy.read}
+                  <ArrowUpRight className="size-4 rtl:-scale-x-100" aria-hidden />
+                </span>
+              </SpotlightCard>
+            </m.li>
+          ))}
+        </AnimatePresence>
+      </m.ul>
+    </PageShell>
   )
 }
